@@ -1,0 +1,142 @@
+/* =============================================
+   GLOBAL STYLES — Enlight Theme (Unified)
+   ============================================= */
+
+* {
+  font-family: 'Open Sans', sans-serif;
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+:root {
+  --color-primary: #68c19f;
+  --color-primary-hover: #4a9b7e;
+  --color-primary-light: rgba(104, 193, 159, 0.12);
+  --color-dark: #2c2c2c;
+  --color-dark-alt: #3a3a3a;
+  --color-bg: #f9f9f9;
+  --color-white: #fff;
+  --color-text: #333;
+  --color-text-muted: #777;
+  --color-border: #eee;
+  --font-heading: 'Raleway', sans-serif;
+  --font-body: 'Open Sans', sans-serif;
+}
+
+/* ---- FORM (Register / Standalone) ---- */
+.register {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-body);
+}
+
+.registerTitle {
+  font-family: var(--font-heading);
+  font-size: 50px;
+  color: var(--color-text);
+}
+
+.registerForm {
+  margin-top: -50px;
+  display: flex;
+  flex-direction: column;
+}
+
+.registerForm>label {
+  margin: 10px 0;
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+.registerInput {
+  padding: 10px;
+  background-color: white;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-family: var(--font-body);
+  transition: border-color 0.3s ease;
+}
+
+.registerInput:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.registerButton {
+  margin-top: 20px;
+  cursor: pointer;
+  background-color: var(--color-primary);
+  color: #fff;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  text-align: center;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+}
+
+.registerButton:hover {
+  background-color: var(--color-primary-hover);
+}
+
+/* ---- Animation Keyframes ---- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.04); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Utility animation classes */
+.anim-fadeIn  { animation: fadeIn  0.4s ease both; }
+.anim-slideUp { animation: slideUp 0.45s ease both; }
+.anim-pulse   { animation: pulse  2s ease-in-out infinite; }
+
+@media screen and (max-width: 480px) {
+  .register {
+    background-position: right;
+  }
+
+  .registerInput {
+    font-size: 15px;
+    padding: 15px;
+    border-radius: 8px;
+  }
+
+  .registerButton {
+    font-size: 16px;
+    padding: 20px;
+    border-radius: 12px;
+  }
+}
