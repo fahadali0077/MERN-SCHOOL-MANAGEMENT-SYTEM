@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import styled, { css, keyframes } from 'styled-components';
 import Avatar from '../ui/Avatar';
@@ -48,10 +48,7 @@ const ICONS = {
 /* ──────────────────────────────────────────────────
    Styled components
 ────────────────────────────────────────────────── */
-const slideIn = keyframes`
-  from { transform: translateX(-100%); opacity: 0; }
-  to   { transform: translateX(0);     opacity: 1; }
-`;
+
 
 const SidebarRoot = styled.aside`
   position: fixed;
