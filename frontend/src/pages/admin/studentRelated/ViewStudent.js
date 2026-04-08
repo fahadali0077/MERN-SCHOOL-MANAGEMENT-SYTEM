@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteUser, getUserDetails, updateUser } from '../../../redux/userRelated/userHandle';
+import { deleteUser, getUserDetails } from '../../../redux/userRelated/userHandle';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getSubjectList } from '../../../redux/sclassRelated/sclassHandle';
 import {
@@ -75,7 +75,6 @@ const ViewStudent = () => {
     const [selectedSection, setSelectedSection] = useState('table');
     const handleSectionChange = (event, newSection) => { setSelectedSection(newSection); };
 
-    const fields = password === '' ? { name, rollNum } : { name, rollNum, password };
 
     useEffect(() => {
         if (userDetails) {
