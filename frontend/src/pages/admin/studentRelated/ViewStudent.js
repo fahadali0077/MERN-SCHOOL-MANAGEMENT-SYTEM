@@ -50,9 +50,7 @@ const ViewStudent = () => {
         }
     }, [dispatch, userDetails]);
 
-    const [name, setName] = useState('');
-    const [rollNum, setRollNum] = useState('');
-    const [password] = useState('');
+
     const [sclassName, setSclassName] = useState('');
     const [studentSchool, setStudentSchool] = useState('');
     // FIX F-7: subjectMarks initial state is [] not ''
@@ -78,8 +76,7 @@ const ViewStudent = () => {
 
     useEffect(() => {
         if (userDetails) {
-            setName(userDetails.name || '');
-            setRollNum(userDetails.rollNum || '');
+
             setSclassName(userDetails.sclassName || '');
             setStudentSchool(userDetails.school || '');
             // FIX F-7: use [] fallback, not ''
