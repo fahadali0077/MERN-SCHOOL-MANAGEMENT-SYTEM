@@ -19,10 +19,7 @@ const float = keyframes`
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(-10px); }
 `;
-const shimmer = keyframes`
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-`;
+
 
 /* ─── Layout ─── */
 const Page = styled.div`

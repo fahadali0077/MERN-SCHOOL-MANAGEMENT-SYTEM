@@ -60,7 +60,7 @@ const userSlice = createSlice({
     },
 });
 
-const { resetUserStatus, entityAdded, ...rest } = userSlice.actions;
+const { resetUserStatus, entityAdded } = userSlice.actions;
 
 export const {
     authRequest,

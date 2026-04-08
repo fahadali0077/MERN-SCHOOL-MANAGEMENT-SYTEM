@@ -46,7 +46,7 @@ const studentSlice = createSlice({
     },
 });
 
-const { studentOperationDone, ...rest } = studentSlice.actions;
+const { studentOperationDone } = studentSlice.actions;
 
 export const {
     getRequest,

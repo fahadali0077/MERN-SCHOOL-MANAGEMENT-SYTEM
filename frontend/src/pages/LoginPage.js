@@ -384,7 +384,7 @@ const ILLUSTRATIONS = { Admin: AdminIllustration, Teacher: TeacherIllustration, 
 const LoginPage = ({ role }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { status, currentUser, response, error, currentRole } = useSelector(s => s.user);
+  const { status, currentUser, response, currentRole } = useSelector(s => s.user);
 
   const [showPw, setShowPw]   = useState(false);
   const [isGuest, setIsGuest] = useState(false);

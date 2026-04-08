@@ -29,12 +29,12 @@ import TableChartOutlinedIcon from '@mui/icons-material/TableChartOutlined';
 import Popup from '../../../components/Popup';
 
 const ViewStudent = () => {
-    const [showTab, setShowTab] = useState(false);
+
 
     const navigate = useNavigate();
     const params = useParams();
     const dispatch = useDispatch();
-    const { userDetails, response, loading, error } = useSelector((state) => state.user);
+    const { userDetails, loading } = useSelector((state) => state.user);
 
     const studentID = params.id;
     const address = 'Student';
@@ -52,7 +52,7 @@ const ViewStudent = () => {
 
     const [name, setName] = useState('');
     const [rollNum, setRollNum] = useState('');
-    const [password, setPassword] = useState('');
+    const [password] = useState('');
     const [sclassName, setSclassName] = useState('');
     const [studentSchool, setStudentSchool] = useState('');
     // FIX F-7: subjectMarks initial state is [] not ''
@@ -61,7 +61,7 @@ const ViewStudent = () => {
 
     const [openStates, setOpenStates] = useState({});
     const [showPopup, setShowPopup] = useState(false);
-    const [message, setMessage] = useState('');
+    const [message] = useState('');
     // FIX F-7: delete confirmation dialog state
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
@@ -89,12 +89,7 @@ const ViewStudent = () => {
         }
     }, [userDetails]);
 
-    const submitHandler = (event) => {
-        event.preventDefault();
-        dispatch(updateUser(fields, studentID, address)).then(() => {
-            dispatch(getUserDetails(studentID, address));
-        }).catch(() => {});
-    };
+
 
     // FIX F-7: proper delete with MUI Dialog confirmation
     const deleteHandler = () => {

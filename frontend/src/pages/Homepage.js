@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import styled, { keyframes, createGlobalStyle } from 'styled-components';
 
@@ -664,6 +664,12 @@ const WHY_ITEMS = [
 /* ══════════════════════════════════════════
    COMPONENT
 ══════════════════════════════════════════ */
+const STATS = [
+  { value: 500, label: 'Students Enrolled', suffix: '+' },
+  { value: 50, label: 'Expert Teachers', suffix: '+' },
+  { value: 20, label: 'Subjects Offered', suffix: '+' },
+  { value: 15, label: 'Years of Excellence', suffix: '+' },
+];
 const Homepage = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -673,12 +679,7 @@ const Homepage = () => {
   const statsRef = useRef(null);
   const [statsVisible, setStatsVisible] = useState(false);
 
-  const STATS = [
-    { value: 500, label: 'Students Enrolled', suffix: '+' },
-    { value: 50, label: 'Expert Teachers', suffix: '+' },
-    { value: 20, label: 'Subjects Offered', suffix: '+' },
-    { value: 15, label: 'Years of Excellence', suffix: '+' },
-  ];
+
 
   /* Navbar scroll */
   useEffect(() => {
