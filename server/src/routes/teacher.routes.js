@@ -17,4 +17,6 @@ router.patch('/:id/status', authorize('schoolAdmin', 'superAdmin'), mongoIdParam
 router.post('/:id/avatar', authorize('schoolAdmin', 'superAdmin'), mongoIdParam,
   upload.single('avatar'), upload.processAvatar, teacherController.uploadAvatar);
 
+router.delete('/:id', authorize('schoolAdmin', 'superAdmin'), mongoIdParam, teacherController.deleteTeacher);
+
 module.exports = router;

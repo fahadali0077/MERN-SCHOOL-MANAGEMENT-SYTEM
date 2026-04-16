@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useGetTeachersQuery, useCreateTeacherMutation, useUpdateTeacherMutation } from '../../store/api/endpoints';
-import { Plus, Search, X, Loader2, GraduationCap, Mail, Phone, Edit2 } from 'lucide-react';
+import { useGetTeachersQuery, useCreateTeacherMutation, useUpdateTeacherMutation, useDeleteTeacherMutation } from '../../store/api/endpoints';
+import { Plus, Search, X, Loader2, GraduationCap, Mail, Phone, Edit2, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
@@ -15,6 +15,7 @@ export default function TeachersPage() {
   const [createTeacher, { isLoading: isCreating }] = useCreateTeacherMutation();
   // FIX: updateTeacher was imported but never called — now wired to edit modal submit
   const [updateTeacher, { isLoading: isUpdating }] = useUpdateTeacherMutation();
+  const [deleteTeacher] = useDeleteTeacherMutation();
 
   const teachers = data?.data || [];
   const pagination = data?.pagination;
@@ -31,6 +32,17 @@ export default function TeachersPage() {
       email: teacher.email,
       phone: teacher.phone || '',
     });
+  };
+
+
+  const handleDelete = async (teacher: any) => {
+    if (!confirm(`Deactivate ${teacher.firstName} ${teacher.lastName}? They will no longer be able to log in.`)) return;
+    try {
+      await deleteTeacher(teacher._id).unwrap();
+      toast.success('Teacher deactivated');
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to deactivate teacher');
+    }
   };
 
   const onCreateSubmit = async (d: any) => {
@@ -110,13 +122,22 @@ export default function TeachersPage() {
                 Joined {new Date(teacher.createdAt).toLocaleDateString()}
               </span>
               {/* FIX: Edit button now opens the edit modal with teacher data */}
-              <button
-                onClick={() => handleEditOpen(teacher)}
-                className="p-1.5 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent/10 transition-all"
-                title="Edit teacher"
-              >
-                <Edit2 size={13} />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleEditOpen(teacher)}
+                  className="p-1.5 rounded-lg text-text-tertiary hover:text-accent hover:bg-accent/10 transition-all"
+                  title="Edit teacher"
+                >
+                  <Edit2 size={13} />
+                </button>
+                <button
+                  onClick={() => handleDelete(teacher)}
+                  className="p-1.5 rounded-lg text-text-tertiary hover:text-danger hover:bg-danger/10 transition-all"
+                  title="Deactivate teacher"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
             </div>
           </div>
         ))}

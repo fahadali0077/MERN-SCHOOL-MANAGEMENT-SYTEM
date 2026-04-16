@@ -77,6 +77,10 @@ export const teachersApi = apiSlice.injectEndpoints({
       query: ({ id, data }) => ({ url: `/teachers/${id}`, method: 'PUT', body: data }),
       invalidatesTags: ['Teachers'],
     }),
+    deleteTeacher: builder.mutation<any, string>({
+      query: (id) => ({ url: `/teachers/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Teachers'],
+    }),
   }),
 });
 
@@ -253,7 +257,7 @@ export const notificationsApi = apiSlice.injectEndpoints({
 // Export all hooks
 export const { useLoginMutation, useRegisterMutation, useLogoutMutation, useGetMeQuery, useForgotPasswordMutation, useResetPasswordMutation, useChangePasswordMutation } = authApi;
 export const { useGetStudentsQuery, useGetStudentQuery, useCreateStudentMutation, useUpdateStudentMutation, useDeleteStudentMutation, useGetStudentStatsQuery } = studentsApi;
-export const { useGetTeachersQuery, useGetTeacherQuery, useCreateTeacherMutation, useUpdateTeacherMutation } = teachersApi;
+export const { useGetTeachersQuery, useGetTeacherQuery, useCreateTeacherMutation, useUpdateTeacherMutation, useDeleteTeacherMutation } = teachersApi;
 export const { useGetClassesQuery, useGetClassQuery, useCreateClassMutation, useGetSubjectsQuery, useCreateSubjectMutation } = classesApi;
 export const { useMarkAttendanceMutation, useGetAttendanceQuery, useGenerateQRMutation, useScanQRMutation, useGetStudentAttendanceQuery } = attendanceApi;
 export const { useGetExamsQuery, useGetExamQuery, useCreateExamMutation, useEnterMarksMutation, useGetExamMarksQuery, useGetReportCardQuery, usePublishResultsMutation } = marksApi;

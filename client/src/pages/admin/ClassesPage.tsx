@@ -4,7 +4,7 @@ import { Plus, BookOpen, Users, X, Loader2, ChevronDown, ChevronRight } from 'lu
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
-const DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday'];
+const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
 export default function ClassesPage() {
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -58,8 +58,8 @@ export default function ClassesPage() {
           <p className="text-text-secondary text-sm">{classes.length} classes, {subjects.length} subjects</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={() => setShowSubject(true)} className="btn-secondary text-sm"><Plus size={14}/>Add Subject</button>
-          <button onClick={() => setShowCreate(true)} className="btn-primary text-sm"><Plus size={15}/>Add Class</button>
+          <button onClick={() => setShowSubject(true)} className="btn-secondary text-sm"><Plus size={14} />Add Subject</button>
+          <button onClick={() => setShowCreate(true)} className="btn-primary text-sm"><Plus size={15} />Add Class</button>
         </div>
       </div>
 
@@ -80,19 +80,19 @@ export default function ClassesPage() {
       {/* Classes grouped by grade */}
       {isLoading ? (
         <div className="space-y-3">
-          {[...Array(4)].map((_, i) => <div key={i} className="skeleton h-20 rounded-card animate-fade-up"/>)}
+          {[...Array(4)].map((_, i) => <div key={i} className="skeleton h-20 rounded-card animate-fade-up" />)}
         </div>
       ) : classes.length === 0 ? (
         <div className="card p-16 text-center animate-fade-up">
-          <BookOpen size={48} className="mx-auto text-text-tertiary opacity-20 mb-3"/>
+          <BookOpen size={48} className="mx-auto text-text-tertiary opacity-20 mb-3" />
           <p className="text-text-secondary text-sm">No classes created yet</p>
         </div>
       ) : (
         <div className="space-y-3 animate-fade-up animate-fade-up-delay-2">
-          {Object.entries(gradeGroups).sort(([a],[b]) => Number(a)-Number(b)).map(([grade, gradeClasses]) => (
+          {[...Object.entries(gradeGroups)].sort(([a], [b]) => Number(a) - Number(b)).map(([grade, gradeClasses]) => (
             <div key={grade} className="card overflow-hidden">
               <div className="flex items-center gap-4 p-4 border-b border-white/5 bg-bg-tertiary/50">
-                <BookOpen size={16} className="text-accent"/>
+                <BookOpen size={16} className="text-accent" />
                 <h3 className="font-display font-semibold text-text-primary">Grade {grade}</h3>
                 <span className="badge badge-accent text-xs">{(gradeClasses as any[]).length} section{(gradeClasses as any[]).length > 1 ? 's' : ''}</span>
               </div>
@@ -120,7 +120,7 @@ export default function ClassesPage() {
                             {cls.classTeacher.firstName} {cls.classTeacher.lastName}
                           </span>
                         )}
-                        {expanded === cls._id ? <ChevronDown size={16} className="text-text-tertiary"/> : <ChevronRight size={16} className="text-text-tertiary"/>}
+                        {expanded === cls._id ? <ChevronDown size={16} className="text-text-tertiary" /> : <ChevronRight size={16} className="text-text-tertiary" />}
                       </div>
                     </button>
 
@@ -169,7 +169,7 @@ export default function ClassesPage() {
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {cls.timetable.sort((a: any, b: any) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day)).map((slot: any, i: number) => (
+                                    {[...cls.timetable].sort((a: any, b: any) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day)).map((slot: any, i: number) => (
                                       <tr key={i} className="border-t border-white/5">
                                         <td className="p-2 text-text-secondary capitalize">{slot.day}</td>
                                         <td className="p-2 text-text-secondary">P{slot.period}</td>
@@ -200,41 +200,41 @@ export default function ClassesPage() {
           <div className="glass w-full max-w-md animate-fade-up">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <h2 className="font-display font-bold text-xl text-text-primary">Create Class</h2>
-              <button onClick={() => setShowCreate(false)} className="p-1.5 rounded-lg text-text-tertiary hover:text-text-primary"><X size={18}/></button>
+              <button onClick={() => setShowCreate(false)} className="p-1.5 rounded-lg text-text-tertiary hover:text-text-primary"><X size={18} /></button>
             </div>
             <form onSubmit={handleSubmit(onCreateClass)} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Class Name *</label>
-                  <input {...register('name', { required: true })} placeholder="e.g. Grade 10" className="input mt-1.5"/>
+                  <input {...register('name', { required: true })} placeholder="e.g. Grade 10" className="input mt-1.5" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Section</label>
-                  <input {...register('section')} placeholder="A" className="input mt-1.5"/>
+                  <input {...register('section')} placeholder="A" className="input mt-1.5" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Grade *</label>
-                  <input {...register('grade', { required: true })} type="number" placeholder="10" min="1" max="12" className="input mt-1.5"/>
+                  <input {...register('grade', { required: true })} type="number" placeholder="10" min="1" max="12" className="input mt-1.5" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Room</label>
-                  <input {...register('room')} placeholder="101" className="input mt-1.5"/>
+                  <input {...register('room')} placeholder="101" className="input mt-1.5" />
                 </div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Academic Year</label>
-                <input {...register('academicYear')} placeholder="2024-25" className="input mt-1.5"/>
+                <input {...register('academicYear')} placeholder="2024-25" className="input mt-1.5" />
               </div>
               <div>
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Capacity</label>
-                <input {...register('capacity')} type="number" defaultValue={40} className="input mt-1.5"/>
+                <input {...register('capacity')} type="number" defaultValue={40} className="input mt-1.5" />
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary flex-1">Cancel</button>
                 <button type="submit" disabled={isCreating} className="btn-primary flex-1 justify-center">
-                  {isCreating ? <Loader2 size={14} className="animate-spin"/> : <Plus size={14}/>}
+                  {isCreating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                   {isCreating ? 'Creating...' : 'Create'}
                 </button>
               </div>
@@ -249,17 +249,17 @@ export default function ClassesPage() {
           <div className="glass w-full max-w-sm animate-fade-up">
             <div className="flex items-center justify-between p-6 border-b border-white/10">
               <h2 className="font-display font-bold text-xl text-text-primary">Add Subject</h2>
-              <button onClick={() => setShowSubject(false)} className="p-1.5 rounded-lg text-text-tertiary hover:text-text-primary"><X size={18}/></button>
+              <button onClick={() => setShowSubject(false)} className="p-1.5 rounded-lg text-text-tertiary hover:text-text-primary"><X size={18} /></button>
             </div>
             <form onSubmit={submitS(onCreateSubject)} className="p-6 space-y-4">
               <div>
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Subject Name *</label>
-                <input {...regS('name', { required: true })} placeholder="Mathematics" className="input mt-1.5"/>
+                <input {...regS('name', { required: true })} placeholder="Mathematics" className="input mt-1.5" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Code *</label>
-                  <input {...regS('code', { required: true })} placeholder="MATH" className="input mt-1.5 uppercase"/>
+                  <input {...regS('code', { required: true })} placeholder="MATH" className="input mt-1.5 uppercase" />
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Type</label>
@@ -272,12 +272,12 @@ export default function ClassesPage() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Credits</label>
-                <input {...regS('credits')} type="number" defaultValue={1} className="input mt-1.5"/>
+                <input {...regS('credits')} type="number" defaultValue={1} className="input mt-1.5" />
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setShowSubject(false)} className="btn-secondary flex-1">Cancel</button>
                 <button type="submit" disabled={isCreatingSubj} className="btn-primary flex-1 justify-center">
-                  {isCreatingSubj ? <Loader2 size={14} className="animate-spin"/> : <Plus size={14}/>}
+                  {isCreatingSubj ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                   {isCreatingSubj ? 'Adding...' : 'Add Subject'}
                 </button>
               </div>

@@ -135,6 +135,22 @@ const teacherController = {
     } catch (err) { next(err); }
   },
 
+
+  async deleteTeacher(req, res, next) {
+    try {
+      const User = require('../models/User.model');
+      const teacher = await User.findOneAndUpdate(
+        { _id: req.params.id, role: 'teacher', schoolId: req.user.schoolId },
+        { isActive: false },
+        { new: true }
+      );
+      if (!teacher) return next(new AppError('Teacher not found', 404));
+      const { cache } = require('../config/redis');
+      await cache.del(`user:${teacher._id}`);
+      return successResponse(res, null, 'Teacher deactivated');
+    } catch (err) { next(err); }
+  }
+
   async uploadAvatar(req, res, next) {
     try {
       if (!req.file) return next(new AppError('No file uploaded', 400));
