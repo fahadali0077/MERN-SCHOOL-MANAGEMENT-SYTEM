@@ -1,0 +1,56 @@
+/*
+ * ─── PRINT STYLES ─────────────────────────────────────────────────────────────
+ * Append these rules to the BOTTOM of client/src/styles/globals.css
+ *
+ * They are activated when the user clicks "Print Report Card" (window.print())
+ * or uses Ctrl+P / Cmd+P on the report card page.
+ *
+ * The sidebar, topbar, navigation, and all non-report-card content are hidden.
+ * The report card card renders white-on-light for standard printers.
+ */
+
+@media print {
+  /* Hide everything that isn't the report card */
+  aside,
+  header,
+  nav,
+  .print\:hidden,
+  [class*="animate-"],
+  [class*="sidebar"] {
+    display: none !important;
+  }
+
+  /* Full-page report card with white background */
+  body,
+  #root,
+  .flex,
+  .flex-1,
+  main {
+    display: block !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    overflow: visible !important;
+  }
+
+  /* Force the card itself to fill the page */
+  .card {
+    border: 1px solid #e5e7eb !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    break-inside: avoid;
+  }
+
+  /* Make text dark for printing */
+  .text-text-primary,
+  .text-text-secondary,
+  .text-text-tertiary,
+  h1, h2, h3, p, span, td, th {
+    color: #111827 !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+}

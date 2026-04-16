@@ -52,17 +52,21 @@ app.use(helmet({
 app.use(mongoSanitize());
 app.use(compression());
 
-// CORS — whitelist only frontend origin
+// FIX: Always include localhost AND production URL (old code used `||` which dropped
+// localhost when CLIENT_URL was set, blocking local dev after setting production env vars)
 const allowedOrigins = [
-  process.env.CLIENT_URL || 'http://localhost:5173',
-  'http://localhost:3000', // common dev port
+  'http://localhost:5173',
+  'http://localhost:3000',
+  ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
 ];
+
 app.use(cors({
   origin: (origin, callback) => {
+    // Allow server-to-server calls (no origin) and listed origins
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('CORS: origin not allowed'));
+      callback(new Error(`CORS: origin not allowed — ${origin}`));
     }
   },
   credentials: true,
@@ -75,7 +79,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Serve local uploads in development
+// Serve local uploads in development only
 if (process.env.NODE_ENV !== 'production') {
   app.use('/uploads', express.static('uploads'));
 }
@@ -87,7 +91,7 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev', {
 
 // ─── Rate limiting ────────────────────────────────────────────────────────────
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 min
+  windowMs: 15 * 60 * 1000,
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
@@ -102,12 +106,6 @@ const authLimiter = rateLimit({
   skip: (req) => process.env.NODE_ENV === 'development'
 });
 
-const uploadLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 min
-  max: 10,
-  message: { success: false, message: 'Upload rate limit exceeded.' }
-});
-
 app.use('/api/', globalLimiter);
 app.use('/api/v1/auth', authLimiter);
 
@@ -117,9 +115,8 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'SchoolMS API Docs',
 }));
 
-// ─── Health check & metrics ───────────────────────────────────────────────────
+// ─── Health check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
-  const { cache } = require('./config/redis');
   res.json({
     success: true,
     message: 'SchoolMS API is running',
@@ -131,7 +128,6 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/metrics', async (req, res) => {
-  // Simple metrics endpoint (protect in production)
   const memUsage = process.memoryUsage();
   res.json({
     memory: {

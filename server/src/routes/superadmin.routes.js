@@ -62,6 +62,41 @@ router.get('/overview', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// FIX: Added GET /superadmin/schools — SchoolsPage.tsx calls this endpoint.
+// The old code only had GET /schools (school.routes.js) which returns the list,
+// but that route is protected and scoped differently. The superAdmin page needs
+// pagination + search for the management view.
+router.get('/schools', async (req, res, next) => {
+  try {
+    const { page = 1, limit = 20, search = '' } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const filter = {};
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { code: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [schools, total] = await Promise.all([
+      School.find(filter)
+        .populate('admin', 'firstName lastName email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit))
+        .lean(),
+      School.countDocuments(filter),
+    ]);
+
+    const pages = Math.ceil(total / parseInt(limit));
+    return successResponse(res, schools, 'Schools fetched', 200, {
+      page: parseInt(page), limit: parseInt(limit), total, pages
+    });
+  } catch (err) { next(err); }
+});
+
 // ─── Per-school breakdown ─────────────────────────────────────────────────────
 router.get('/schools/:schoolId/stats', async (req, res, next) => {
   try {
@@ -70,15 +105,15 @@ router.get('/schools/:schoolId/stats', async (req, res, next) => {
     const cached = await cache.get(cacheKey);
     if (cached) return successResponse(res, cached, 'School stats fetched');
 
+    const mongoose = require('mongoose');
     const [
-      school, studentCount, teacherCount,
-      revenue, pendingFees
+      school, studentCount, teacherCount, revenue, pendingFees
     ] = await Promise.all([
       School.findById(schoolId).populate('admin', 'firstName lastName email'),
       Student.countDocuments({ schoolId, status: 'active' }),
       User.countDocuments({ schoolId, role: 'teacher', isActive: true }),
       FeeInvoice.aggregate([
-        { $match: { schoolId: require('mongoose').Types.ObjectId(schoolId) } },
+        { $match: { schoolId: new mongoose.Types.ObjectId(schoolId) } },
         { $group: { _id: null, collected: { $sum: '$paidAmount' }, pending: { $sum: '$balanceDue' } } }
       ]),
       FeeInvoice.countDocuments({ schoolId, status: { $in: ['pending', 'overdue'] } })
@@ -118,6 +153,7 @@ router.patch('/schools/:schoolId/subscription', async (req, res, next) => {
     );
     if (!school) return res.status(404).json({ success: false, message: 'School not found' });
     await cache.del(`superadmin:school:${req.params.schoolId}`);
+    await cache.del('superadmin:overview');
     return successResponse(res, school, 'Subscription updated');
   } catch (err) { next(err); }
 });

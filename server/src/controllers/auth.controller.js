@@ -1,5 +1,5 @@
 const { authService, setCookies, clearCookies } = require('../services/auth.service');
-const { successResponse, errorResponse } = require('../utils/apiResponse');
+const { successResponse } = require('../utils/apiResponse');
 const { AppError } = require('../middlewares/errorHandler');
 
 const authController = {
@@ -7,7 +7,7 @@ const authController = {
     try {
       const { user, accessToken, refreshToken } = await authService.register(req.body);
       setCookies(res, accessToken, refreshToken);
-      
+
       const userResponse = {
         _id: user._id, firstName: user.firstName, lastName: user.lastName,
         email: user.email, role: user.role, schoolId: user.schoolId,
@@ -40,7 +40,8 @@ const authController = {
   async refresh(req, res, next) {
     try {
       const oldToken = req.cookies?.refreshToken;
-      const { accessToken, refreshToken, user } = await authService.refreshTokens(oldToken);
+      if (!oldToken) return next(new AppError('Refresh token missing', 401));
+      const { accessToken, refreshToken } = await authService.refreshTokens(oldToken);
       setCookies(res, accessToken, refreshToken);
       return successResponse(res, { accessToken }, 'Token refreshed');
     } catch (err) { next(err); }
@@ -88,7 +89,7 @@ const authController = {
       const { currentPassword, newPassword } = req.body;
       const User = require('../models/User.model');
       const user = await User.findById(req.user._id).select('+password');
-      
+
       const isMatch = await user.comparePassword(currentPassword);
       if (!isMatch) return next(new AppError('Current password is incorrect', 400));
 
@@ -101,7 +102,59 @@ const authController = {
       clearCookies(res);
       return successResponse(res, null, 'Password changed. Please log in again.');
     } catch (err) { next(err); }
-  }
+  },
+
+  // FIX: New — called by SettingsPage.tsx to persist notification preferences
+  async updatePreferences(req, res, next) {
+    try {
+      const { notifications } = req.body;
+      const User = require('../models/User.model');
+
+      const user = await User.findByIdAndUpdate(
+        req.user._id,
+        { $set: { 'preferences.notifications': notifications } },
+        { new: true, select: '-password -refreshTokens' }
+      ).lean();
+
+      if (!user) return next(new AppError('User not found', 404));
+
+      // Bust the Redis user cache so AuthInitializer picks up the new preferences
+      const { cache } = require('../config/redis');
+      await cache.del(`user:${req.user._id}`);
+
+      return successResponse(res, { user }, 'Preferences updated');
+    } catch (err) { next(err); }
+  },
+
+  // FIX: New — called by SettingsPage.tsx danger zone
+  async deleteAccount(req, res, next) {
+    try {
+      const { password } = req.body;
+      if (!password) return next(new AppError('Password is required to delete your account', 400));
+
+      const User = require('../models/User.model');
+      const bcrypt = require('bcryptjs');
+
+      const user = await User.findById(req.user._id).select('+password');
+      if (!user) return next(new AppError('User not found', 404));
+
+      const valid = await bcrypt.compare(password, user.password);
+      if (!valid) return next(new AppError('Incorrect password', 401));
+
+      // Soft-delete: mark inactive and anonymise email so it can't be re-used
+      await User.findByIdAndUpdate(req.user._id, {
+        isActive: false,
+        email: `deleted_${Date.now()}_${user.email}`,
+        refreshTokens: [],
+      });
+
+      const { cache } = require('../config/redis');
+      await cache.del(`user:${req.user._id}`);
+
+      clearCookies(res);
+      return successResponse(res, null, 'Account deleted');
+    } catch (err) { next(err); }
+  },
 };
 
 module.exports = authController;

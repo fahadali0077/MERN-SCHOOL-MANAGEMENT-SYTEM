@@ -3,13 +3,6 @@ const router = express.Router();
 const authController = require('../controllers/auth.controller');
 const { authenticate } = require('../middlewares/auth.middleware');
 
-/**
- * @swagger
- * /api/v1/auth/register:
- *   post:
- *     summary: Register a new user
- *     tags: [Auth]
- */
 router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.post('/refresh', authController.refresh);
@@ -22,5 +15,8 @@ router.use(authenticate);
 router.get('/me', authController.getMe);
 router.post('/logout', authController.logout);
 router.patch('/change-password', authController.changePassword);
+// FIX: Added missing endpoints required by SettingsPage.tsx
+router.patch('/preferences', authController.updatePreferences);
+router.delete('/account', authController.deleteAccount);
 
 module.exports = router;

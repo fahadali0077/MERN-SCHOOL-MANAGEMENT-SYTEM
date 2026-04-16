@@ -30,17 +30,22 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
+    // Used after login/register — includes both user and token
     setCredentials: (state, action: PayloadAction<{ user: User; accessToken: string }>) => {
       state.user = action.payload.user;
       state.accessToken = action.payload.accessToken;
       state.isAuthenticated = true;
       state.isLoading = false;
     },
-    setToken: (state, action: PayloadAction<string>) => {
-      state.accessToken = action.payload;
-    },
+    // FIX: setUser now also marks isAuthenticated=true so AuthInitializer
+    // can call it from GET /auth/me (which returns user but no token).
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
+      state.isAuthenticated = true;
+      state.isLoading = false;
+    },
+    setToken: (state, action: PayloadAction<string>) => {
+      state.accessToken = action.payload;
     },
     logout: (state) => {
       state.user = null;

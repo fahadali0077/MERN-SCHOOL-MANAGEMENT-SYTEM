@@ -4,8 +4,7 @@ import { Provider } from 'react-redux';
 import { Toaster } from 'react-hot-toast';
 import { store } from './store';
 import { useGetMeQuery } from './store/api/endpoints';
-import { setCredentials, setLoading } from './store/slices/authSlice';
-import { logout } from './store/slices/authSlice';
+import { setUser, setLoading, logout } from './store/slices/authSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectIsAuthenticated, selectUserRole } from './store/slices/authSlice';
 import { RootState } from './store';
@@ -24,6 +23,7 @@ const AdminDashboard      = L(() => import('./pages/dashboard/AdminDashboard'));
 const SuperAdminDashboard = L(() => import('./pages/dashboard/SuperAdminDashboard'));
 const TeacherDashboard    = L(() => import('./pages/dashboard/TeacherDashboard'));
 const StudentDashboard    = L(() => import('./pages/dashboard/StudentDashboard'));
+const SchoolsPage         = L(() => import('./pages/superadmin/SchoolsPage'));   // FIX: was missing
 const StudentsPage        = L(() => import('./pages/students/StudentsPage'));
 const StudentDetail       = L(() => import('./pages/students/StudentDetail'));
 const AddStudent          = L(() => import('./pages/students/AddStudent'));
@@ -41,6 +41,7 @@ const AssignmentsPage     = L(() => import('./pages/assignments/AssignmentsPage'
 const MessagesPage        = L(() => import('./pages/messages/MessagesPage'));
 const ProfilePage         = L(() => import('./pages/ProfilePage'));
 const SettingsPage        = L(() => import('./pages/SettingsPage'));
+const NotFound            = L(() => import('./pages/NotFound'));   // FIX: was missing
 
 const PageLoader = () => (
   <div className="min-h-screen bg-bg-primary flex items-center justify-center">
@@ -51,14 +52,22 @@ const PageLoader = () => (
   </div>
 );
 
+// FIX: AuthInitializer now uses setUser (not setCredentials) because GET /auth/me
+// does NOT return accessToken. The token only comes from login/register/refresh responses.
 const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useDispatch();
   const { data, error, isLoading } = useGetMeQuery();
   useSocket();
+
   useEffect(() => {
-    if (data?.data?.user) dispatch(setCredentials({ user: data.data.user, accessToken: data.data.accessToken || '' }));
-    else if (error) dispatch(setLoading(false));
+    if (data?.data?.user) {
+      dispatch(setUser(data.data.user));
+      dispatch(setLoading(false));
+    } else if (error) {
+      dispatch(setLoading(false));
+    }
   }, [data, error, dispatch]);
+
   if (isLoading) return <PageLoader />;
   return <>{children}</>;
 };
@@ -95,12 +104,16 @@ function AppRoutes() {
           <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route index element={<DashboardRedirect />} />
             <Route path="superadmin" element={<ProtectedRoute allowedRoles={['superAdmin']}><SuperAdminDashboard /></ProtectedRoute>} />
+            {/* FIX: Added missing /dashboard/schools route for superAdmin nav item */}
+            <Route path="schools" element={<ProtectedRoute allowedRoles={['superAdmin']}><SchoolsPage /></ProtectedRoute>} />
             <Route path="admin" element={<ProtectedRoute allowedRoles={['superAdmin','schoolAdmin']}><AdminDashboard /></ProtectedRoute>} />
             <Route path="teacher" element={<ProtectedRoute allowedRoles={['teacher']}><TeacherDashboard /></ProtectedRoute>} />
             <Route path="student" element={<StudentDashboard />} />
             <Route path="students" element={<StudentsPage />} />
             <Route path="students/add" element={<ProtectedRoute allowedRoles={['schoolAdmin','superAdmin']}><AddStudent /></ProtectedRoute>} />
             <Route path="students/:id" element={<StudentDetail />} />
+            {/* FIX: Added missing edit route (StudentsPage links to this) */}
+            <Route path="students/:id/edit" element={<ProtectedRoute allowedRoles={['schoolAdmin','superAdmin']}><AddStudent /></ProtectedRoute>} />
             <Route path="teachers" element={<ProtectedRoute allowedRoles={['schoolAdmin','superAdmin']}><TeachersPage /></ProtectedRoute>} />
             <Route path="classes" element={<ClassesPage />} />
             <Route path="attendance" element={<AttendancePage />} />
@@ -117,7 +130,8 @@ function AppRoutes() {
             <Route path="settings" element={<SettingsPage />} />
           </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* FIX: Catch-all now shows proper 404 page instead of silently redirecting to "/" */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
     </AuthInitializer>

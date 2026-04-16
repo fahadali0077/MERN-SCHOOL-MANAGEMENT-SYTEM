@@ -1,0 +1,54 @@
+services:
+  - type: web
+    name: schoolms-api
+    env: node
+    region: oregon
+    plan: free
+
+    # Build & start
+    buildCommand: cd server && npm install --production=false
+    startCommand: cd server && node src/app.js
+
+    # Auto-deploy from main branch
+    autoDeploy: true
+
+    # Health check — Render uses this to know the service is up
+    healthCheckPath: /health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # Fill these in the Render dashboard — do NOT commit secrets to Git
+      - key: PORT
+        value: 5000
+      - key: MONGODB_URI
+        sync: false        # set in Render dashboard
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: JWT_ACCESS_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: REDIS_URL
+        sync: false        # Upstash rediss:// URL
+      - key: CLIENT_URL
+        sync: false        # https://your-app.vercel.app
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false

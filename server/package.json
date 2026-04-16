@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "nodemon src/app.js",
     "start": "node src/app.js",
-    "seed": "node src/scripts/seed.js --fresh"
+    "seed": "node src/scripts/seed.js --fresh",
+    "seed:safe": "node src/scripts/seed.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "express": "^4.21.2",
@@ -17,6 +21,7 @@
     "joi": "^17.13.3",
     "multer": "^1.4.5-lts.1",
     "sharp": "^0.33.5",
+    "cloudinary": "^2.5.1",
     "nodemailer": "^6.9.16",
     "socket.io": "^4.8.1",
     "ioredis": "^5.4.1",
