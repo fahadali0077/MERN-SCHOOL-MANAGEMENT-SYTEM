@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
@@ -5,6 +6,27 @@ import {
   FileText, Phone, Mail, Calendar, MapPin, Edit2, Upload
 } from 'lucide-react';
 import { useGetStudentQuery, useGetStudentAttendanceQuery, useGetStudentFeesQuery } from '../../store/api/endpoints';
+import { apiSlice } from '../../store/api/apiSlice';
+import { useWindowTitle } from '../../hooks';
+
+// Inject upload endpoint inline
+const studentDocApi = apiSlice.injectEndpoints({
+  endpoints: (b) => ({
+    uploadStudentDocument: b.mutation<any, { studentId: string; formData: FormData }>({
+      query: ({ studentId, formData }) => ({
+        url: `/students/${studentId}/documents`,
+        method: 'POST',
+        body: formData,
+        // Don't set Content-Type — browser sets it with boundary for multipart
+        formData: true,
+      }),
+      invalidatesTags: (r, e, { studentId }) => [{ type: 'Students', id: studentId }],
+    }),
+  }),
+  overrideExisting: false,
+});
+
+const { useUploadStudentDocumentMutation } = studentDocApi;
 
 const tabs = [
   { id: 'overview', label: 'Overview', icon: User },
@@ -25,7 +47,11 @@ const InfoRow = ({ label, value, icon: Icon }: { label: string; value?: string; 
 );
 
 export default function StudentDetail() {
+  useWindowTitle('Student Profile');
   const { id } = useParams<{ id: string }>();
+  const [uploadingDoc, setUploadingDoc] = React.useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [uploadDocument] = useUploadStudentDocumentMutation();
   const [activeTab, setActiveTab] = useState('overview');
 
   const { data: studentData, isLoading } = useGetStudentQuery(id!);
@@ -43,6 +69,27 @@ export default function StudentDetail() {
       </div>
     );
   }
+
+  const handleUploadClick = () => fileInputRef.current?.click();
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !student) return;
+    setUploadingDoc(true);
+    try {
+      const formData = new FormData();
+      formData.append('document', file);
+      formData.append('name', file.name);
+      formData.append('type', file.type.includes('pdf') ? 'pdf' : 'other');
+      await uploadDocument({ studentId: student._id, formData }).unwrap();
+      toast.success('Document uploaded');
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Upload failed');
+    } finally {
+      setUploadingDoc(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   if (!student) {
     return (
@@ -293,7 +340,25 @@ export default function StudentDetail() {
         {activeTab === 'documents' && (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <button className="btn-primary text-sm flex items-center gap-2"><Upload size={14}/>Upload Document</button>
+              <>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.jpg,.png,.jpeg"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                <button
+                  onClick={handleUploadClick}
+                  disabled={uploadingDoc}
+                  className="btn-primary text-sm flex items-center gap-2 disabled:opacity-60"
+                >
+                  {uploadingDoc
+                    ? <><span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"/><span>Uploading...</span></>
+                    : <><Upload size={14}/><span>Upload Document</span></>
+                  }
+                </button>
+              </>
             </div>
             {student.documents?.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

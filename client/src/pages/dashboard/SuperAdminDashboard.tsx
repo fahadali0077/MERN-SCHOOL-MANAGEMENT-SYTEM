@@ -4,6 +4,7 @@ import { selectUserRole } from '../../store/slices/authSlice';
 import { useGetAdminDashboardQuery } from '../../store/api/endpoints';
 import { School, Users, DollarSign, TrendingUp, Server, Activity } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { useWindowTitle } from '../../hooks';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload?.length) {
@@ -39,6 +40,7 @@ const schoolsByPlan = [
 ];
 
 export default function SuperAdminDashboard() {
+  useWindowTitle('Platform Overview');
   return (
     <div className="p-6 space-y-6">
       {/* Header */}

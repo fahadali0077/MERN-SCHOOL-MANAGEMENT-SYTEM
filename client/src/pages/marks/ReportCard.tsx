@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useGetReportCardQuery } from '../../store/api/endpoints';
 import { ArrowLeft, Printer, School, Award, CheckCircle, XCircle } from 'lucide-react';
+import { useWindowTitle } from '../../hooks';
 
 const gradeColor: Record<string, string> = {
   'A+': '#10B981', 'A': '#10B981', 'B+': '#3B82F6', 'B': '#3B82F6',
@@ -9,6 +10,7 @@ const gradeColor: Record<string, string> = {
 };
 
 export default function ReportCard() {
+  useWindowTitle('Report Card');
   const { studentId, examId } = useParams<{ studentId: string; examId: string }>();
   const printRef = useRef<HTMLDivElement>(null);
   const { data, isLoading } = useGetReportCardQuery({ studentId: studentId!, examId: examId! });

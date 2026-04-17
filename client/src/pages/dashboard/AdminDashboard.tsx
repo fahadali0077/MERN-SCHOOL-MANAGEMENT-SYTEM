@@ -2,6 +2,7 @@ import React from 'react';
 import { useGetAdminDashboardQuery } from '../../store/api/endpoints';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Users, GraduationCap, TrendingUp, DollarSign, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { useWindowTitle } from '../../hooks';
 
 const StatCard = ({ label, value, sub, icon: Icon, color, trend }: any) => (
   <div className="stat-card animate-fade-up">
@@ -38,6 +39,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function AdminDashboard() {
+  useWindowTitle('Dashboard');
   const { data, isLoading } = useGetAdminDashboardQuery();
   const dashboard = data?.data;
 

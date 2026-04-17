@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
+import { useWindowTitle } from '../hooks';
   School, Users, ClipboardList, BarChart3, DollarSign, Bell,
   QrCode, Shield, Zap, Globe, ArrowRight, CheckCircle, Star, ChevronRight
 } from 'lucide-react';
@@ -58,6 +59,7 @@ const Marquee = ({ items, reverse = false }: { items: typeof testimonials; rever
 );
 
 export default function Landing() {
+  useWindowTitle('SchoolMS — School Management');
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

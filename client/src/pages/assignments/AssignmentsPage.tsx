@@ -10,6 +10,7 @@ import { apiSlice } from '../../store/api/apiSlice';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { useWindowTitle } from '../../hooks';
 
 // ─── Inject endpoints ─────────────────────────────────────────────────────────
 const assignmentApi = apiSlice.injectEndpoints({
@@ -110,6 +111,7 @@ function SubmitModal({
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function AssignmentsPage() {
+  useWindowTitle('Assignments');
   const [showCreate, setShowCreate] = useState(false);
   const [submitTarget, setSubmitTarget] = useState<any | null>(null);
   const [selectedClass, setSelectedClass] = useState('');

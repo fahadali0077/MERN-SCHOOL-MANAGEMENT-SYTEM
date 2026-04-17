@@ -5,6 +5,7 @@ import { Send, Search, Plus, MessageCircle, X, Loader2, Users } from 'lucide-rea
 import { apiSlice } from '../../store/api/apiSlice';
 import { formatDistanceToNow } from 'date-fns';
 import { useSocket } from '../../hooks/useSocket';
+import { useWindowTitle } from '../../hooks';
 
 const messageApi = apiSlice.injectEndpoints({
   endpoints: (b) => ({
@@ -118,6 +119,7 @@ function NewConversationModal({
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function MessagesPage() {
+  useWindowTitle('Messages');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [search, setSearch] = useState('');

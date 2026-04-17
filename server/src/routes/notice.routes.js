@@ -18,6 +18,10 @@ router.get('/', async (req, res, next) => {
     if (cached) return successResponse(res, cached.data, 'Notices fetched', 200, cached.pagination);
 
     const filter = { schoolId, isPublished: true, ...filterQuery };
+    if (search) filter.$or = [
+      { title: { $regex: search, $options: 'i' } },
+      { content: { $regex: search, $options: 'i' } }
+    ];
     if (req.query.type) filter.type = req.query.type;
 
     const [notices, total] = await Promise.all([

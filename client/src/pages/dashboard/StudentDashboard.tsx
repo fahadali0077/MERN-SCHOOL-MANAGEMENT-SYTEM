@@ -2,8 +2,10 @@
 import React from 'react';
 import { useGetStudentDashboardQuery } from '../../store/api/endpoints';
 import { ClipboardList, BarChart3, DollarSign, Bell } from 'lucide-react';
+import { useWindowTitle } from '../../hooks';
 
 export default function StudentDashboard() {
+  useWindowTitle('My Dashboard');
   const { data, isLoading } = useGetStudentDashboardQuery();
   const d = data?.data;
 

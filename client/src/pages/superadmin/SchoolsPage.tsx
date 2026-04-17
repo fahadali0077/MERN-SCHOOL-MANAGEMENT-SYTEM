@@ -3,6 +3,7 @@ import { apiSlice } from '../../store/api/apiSlice';
 import { Plus, Search, School, Users, GraduationCap, ToggleLeft, ToggleRight, X, Loader2, Globe } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import { useWindowTitle } from '../../hooks';
 
 // ─── Inject endpoints inline (superAdmin-only) ────────────────────────────────
 const schoolsApi = apiSlice.injectEndpoints({
@@ -37,6 +38,7 @@ const planBadge: Record<string, string> = {
 };
 
 export default function SchoolsPage() {
+  useWindowTitle('Schools');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);

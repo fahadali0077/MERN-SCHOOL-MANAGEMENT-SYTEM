@@ -2,16 +2,29 @@ import React, { useState } from 'react';
 import { useGetTeachersQuery, useCreateTeacherMutation, useUpdateTeacherMutation, useDeleteTeacherMutation } from '../../store/api/endpoints';
 import { Plus, Search, X, Loader2, GraduationCap, Mail, Phone, Edit2, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import toast from 'react-hot-toast';
+import { useWindowTitle } from '../../hooks';
+
+
+const teacherSchema = z.object({
+  firstName: z.string().min(2, 'First name must be at least 2 characters').regex(/^[a-zA-Z\s'-]+$/, 'Name cannot contain numbers or special characters'),
+  lastName:  z.string().min(2, 'Last name must be at least 2 characters').regex(/^[a-zA-Z\s'-]+$/, 'Name cannot contain numbers or special characters'),
+  email:     z.string().email('Enter a valid email address'),
+  phone:     z.string().optional(),
+});
+type TeacherForm = z.infer<typeof teacherSchema>;
 
 export default function TeachersPage() {
+  useWindowTitle('Teachers');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
   // FIX: Edit modal state — was missing, so the Edit button had no effect
   const [editTeacher, setEditTeacher] = useState<any | null>(null);
 
-  const { data, isLoading } = useGetTeachersQuery({ page, limit: 20, search });
+  const { data, isLoading, isError } = useGetTeachersQuery({ page, limit: 20, search });
   const [createTeacher, { isLoading: isCreating }] = useCreateTeacherMutation();
   // FIX: updateTeacher was imported but never called — now wired to edit modal submit
   const [updateTeacher, { isLoading: isUpdating }] = useUpdateTeacherMutation();
@@ -20,8 +33,8 @@ export default function TeachersPage() {
   const teachers = data?.data || [];
   const pagination = data?.pagination;
 
-  const createForm = useForm();
-  const editForm = useForm();
+  const createForm = useForm<TeacherForm>({ resolver: zodResolver(teacherSchema) });
+  const editForm = useForm<TeacherForm>({ resolver: zodResolver(teacherSchema) });
 
   // Open edit modal and pre-populate form
   const handleEditOpen = (teacher: any) => {
@@ -67,6 +80,16 @@ export default function TeachersPage() {
       toast.error(err?.data?.message || 'Failed to update teacher');
     }
   };
+
+  if (isError) return (
+    <div className="p-6 flex items-center justify-center min-h-64">
+      <div className="card p-8 text-center max-w-sm">
+        <p className="text-danger font-semibold">Failed to load data</p>
+        <p className="text-text-secondary text-sm mt-2">Please refresh the page.</p>
+        <button onClick={() => window.location.reload()} className="btn-primary text-sm mt-4">Refresh</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-6 space-y-6">
@@ -168,16 +191,19 @@ export default function TeachersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">First Name *</label>
-                  <input {...createForm.register('firstName', { required: true })} placeholder="John" className="input mt-1.5" />
+                  <input {...createForm.register('firstName')} placeholder="John" className={`input mt-1.5 ${createForm.formState.errors.firstName ? 'border-danger/50' : ''}`} />
+                  {createForm.formState.errors.firstName && <p className="text-danger text-xs mt-1">{createForm.formState.errors.firstName.message}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Last Name *</label>
-                  <input {...createForm.register('lastName', { required: true })} placeholder="Doe" className="input mt-1.5" />
+                  <input {...createForm.register('lastName')} placeholder="Doe" className={`input mt-1.5 ${createForm.formState.errors.lastName ? 'border-danger/50' : ''}`} />
+                  {createForm.formState.errors.lastName && <p className="text-danger text-xs mt-1">{createForm.formState.errors.lastName.message}</p>}
                 </div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Email *</label>
-                <input {...createForm.register('email', { required: true })} type="email" placeholder="teacher@school.edu" className="input mt-1.5" />
+                <input {...createForm.register('email')} type="email" placeholder="teacher@school.edu" className={`input mt-1.5 ${createForm.formState.errors.email ? 'border-danger/50' : ''}`} />
+                {createForm.formState.errors.email && <p className="text-danger text-xs mt-1">{createForm.formState.errors.email.message}</p>}
               </div>
               <div>
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Phone</label>
@@ -207,16 +233,19 @@ export default function TeachersPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">First Name *</label>
-                  <input {...editForm.register('firstName', { required: true })} className="input mt-1.5" />
+                  <input {...editForm.register('firstName')} className={`input mt-1.5 ${editForm.formState.errors.firstName ? 'border-danger/50' : ''}`} />
+                  {editForm.formState.errors.firstName && <p className="text-danger text-xs mt-1">{editForm.formState.errors.firstName.message}</p>}
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Last Name *</label>
-                  <input {...editForm.register('lastName', { required: true })} className="input mt-1.5" />
+                  <input {...editForm.register('lastName')} className={`input mt-1.5 ${editForm.formState.errors.lastName ? 'border-danger/50' : ''}`} />
+                  {editForm.formState.errors.lastName && <p className="text-danger text-xs mt-1">{editForm.formState.errors.lastName.message}</p>}
                 </div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Email *</label>
-                <input {...editForm.register('email', { required: true })} type="email" className="input mt-1.5" />
+                <input {...editForm.register('email')} type="email" className={`input mt-1.5 ${editForm.formState.errors.email ? 'border-danger/50' : ''}`} />
+                {editForm.formState.errors.email && <p className="text-danger text-xs mt-1">{editForm.formState.errors.email.message}</p>}
               </div>
               <div>
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Phone</label>

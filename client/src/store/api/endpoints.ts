@@ -26,6 +26,14 @@ export const authApi = apiSlice.injectEndpoints({
     changePassword: builder.mutation<any, { currentPassword: string; newPassword: string }>({
       query: (data) => ({ url: '/auth/change-password', method: 'PATCH', body: data }),
     }),
+    updateProfile: builder.mutation<any, { firstName: string; lastName: string; phone?: string }>({
+      query: (data) => ({ url: '/auth/profile', method: 'PATCH', body: data }),
+      invalidatesTags: ['User'],
+    }),
+    uploadAvatar: builder.mutation<any, FormData>({
+      query: (formData) => ({ url: '/auth/avatar', method: 'POST', body: formData }),
+      invalidatesTags: ['User'],
+    }),
   }),
 });
 
@@ -201,7 +209,7 @@ export const feesApi = apiSlice.injectEndpoints({
 // ─── NOTICES ──────────────────────────────────────────────────────────────────
 export const noticesApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
-    getNotices: builder.query<any, { page?: number; type?: string }>({
+    getNotices: builder.query<any, { page?: number; type?: string; search?: string }>({
       query: (params) => ({ url: '/notices', params }),
       providesTags: ['Notices'],
     }),
@@ -255,7 +263,7 @@ export const notificationsApi = apiSlice.injectEndpoints({
 });
 
 // Export all hooks
-export const { useLoginMutation, useRegisterMutation, useLogoutMutation, useGetMeQuery, useForgotPasswordMutation, useResetPasswordMutation, useChangePasswordMutation } = authApi;
+export const { useLoginMutation, useRegisterMutation, useLogoutMutation, useGetMeQuery, useForgotPasswordMutation, useResetPasswordMutation, useChangePasswordMutation, useUpdateProfileMutation, useUploadAvatarMutation } = authApi;
 export const { useGetStudentsQuery, useGetStudentQuery, useCreateStudentMutation, useUpdateStudentMutation, useDeleteStudentMutation, useGetStudentStatsQuery } = studentsApi;
 export const { useGetTeachersQuery, useGetTeacherQuery, useCreateTeacherMutation, useUpdateTeacherMutation, useDeleteTeacherMutation } = teachersApi;
 export const { useGetClassesQuery, useGetClassQuery, useCreateClassMutation, useGetSubjectsQuery, useCreateSubjectMutation } = classesApi;

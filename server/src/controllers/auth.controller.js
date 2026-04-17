@@ -104,6 +104,45 @@ const authController = {
     } catch (err) { next(err); }
   },
 
+
+  async updateProfile(req, res, next) {
+    try {
+      const { firstName, lastName, phone } = req.body;
+      const User = require('../models/User.model');
+      const allowed = {};
+      if (firstName) allowed.firstName = firstName.trim();
+      if (lastName)  allowed.lastName  = lastName.trim();
+      if (phone !== undefined) allowed.phone = phone;
+
+      const user = await User.findByIdAndUpdate(
+        req.user._id,
+        allowed,
+        { new: true, select: '-password -refreshTokens', runValidators: true }
+      ).lean();
+
+      if (!user) return next(new AppError('User not found', 404));
+      const { cache } = require('../config/redis');
+      await cache.del(`user:${req.user._id}`);
+      return successResponse(res, { user }, 'Profile updated');
+    } catch (err) { next(err); }
+  },
+
+  async uploadAvatar(req, res, next) {
+    try {
+      if (!req.file) return next(new AppError('No file uploaded', 400));
+      const avatarUrl = req.file.location;
+      const User = require('../models/User.model');
+      const user = await User.findByIdAndUpdate(
+        req.user._id,
+        { avatar: avatarUrl },
+        { new: true, select: '-password -refreshTokens' }
+      ).lean();
+      const { cache } = require('../config/redis');
+      await cache.del(`user:${req.user._id}`);
+      return successResponse(res, { user, avatarUrl }, 'Avatar updated');
+    } catch (err) { next(err); }
+  },
+
   // FIX: New — called by SettingsPage.tsx to persist notification preferences
   async updatePreferences(req, res, next) {
     try {

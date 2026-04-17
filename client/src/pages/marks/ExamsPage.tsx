@@ -5,6 +5,7 @@ import { useGetClassesQuery, useGetSubjectsQuery } from '../../store/api/endpoin
 import { useForm } from 'react-hook-form';
 import { Plus, BookOpen, Calendar, Users, Send, X, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useWindowTitle } from '../../hooks';
 
 const ExamTypeColors: Record<string, string> = {
   unitTest: 'badge-accent',
@@ -16,8 +17,9 @@ const ExamTypeColors: Record<string, string> = {
 };
 
 export default function ExamsPage() {
+  useWindowTitle('Exams & Marks');
   const [showCreate, setShowCreate] = useState(false);
-  const { data, isLoading } = useGetExamsQuery({});
+  const { data, isLoading, isError } = useGetExamsQuery({});
   const { data: classesData } = useGetClassesQuery();
   const [createExam, { isLoading: isCreating }] = useCreateExamMutation();
   const [publishResults] = usePublishResultsMutation();
@@ -46,6 +48,16 @@ export default function ExamsPage() {
       toast.error('Failed to publish results');
     }
   };
+
+  if (isError) return (
+    <div className="p-6 flex items-center justify-center min-h-64">
+      <div className="card p-8 text-center max-w-sm">
+        <p className="text-danger font-semibold">Failed to load data</p>
+        <p className="text-text-secondary text-sm mt-2">Please refresh the page.</p>
+        <button onClick={() => window.location.reload()} className="btn-primary text-sm mt-4">Refresh</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-6 space-y-6">

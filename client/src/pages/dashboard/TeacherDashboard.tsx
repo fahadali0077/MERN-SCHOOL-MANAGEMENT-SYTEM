@@ -2,8 +2,10 @@
 import React from 'react';
 import { useGetTeacherDashboardQuery } from '../../store/api/endpoints';
 import { BookOpen, ClipboardList, BarChart3, Bell } from 'lucide-react';
+import { useWindowTitle } from '../../hooks';
 
 export default function TeacherDashboard() {
+  useWindowTitle('Dashboard');
   const { data, isLoading } = useGetTeacherDashboardQuery();
   const dashboard = data?.data;
 

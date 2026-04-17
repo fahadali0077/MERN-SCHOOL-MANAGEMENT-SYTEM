@@ -7,25 +7,40 @@ import { useCreateStudentMutation } from '../../store/api/endpoints';
 import { useGetClassesQuery } from '../../store/api/endpoints';
 import { ArrowLeft, Loader2, UserPlus, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useWindowTitle } from '../../hooks';
+
+const nameRegex = /^[a-zA-Z\s'\-]+$/;
 
 const schema = z.object({
-  firstName: z.string().min(2, 'Required'),
-  lastName: z.string().min(2, 'Required'),
-  email: z.string().email('Valid email required'),
-  phone: z.string().optional(),
-  classId: z.string().min(1, 'Select a class'),
-  rollNumber: z.string().min(1, 'Required'),
-  gender: z.enum(['male', 'female', 'other']),
-  dateOfBirth: z.string().optional(),
-  bloodGroup: z.string().optional(),
-  admissionDate: z.string().min(1, 'Required'),
-  feeCategory: z.string().default('regular'),
-  guardianName: z.string().optional(),
-  guardianPhone: z.string().optional(),
-  guardianRelation: z.string().optional(),
-  currentStreet: z.string().optional(),
-  currentCity: z.string().optional(),
-  currentState: z.string().optional(),
+  firstName:       z.string().min(2, 'At least 2 characters').max(50, 'Too long').regex(nameRegex, 'Letters only'),
+  lastName:        z.string().min(2, 'At least 2 characters').max(50, 'Too long').regex(nameRegex, 'Letters only'),
+  email:           z.string().email('Enter a valid email'),
+  phone:           z.string().regex(/^[\+\d\s\-()]{7,20}$/, 'Invalid phone number').optional().or(z.literal('')),
+  classId:         z.string().min(1, 'Select a class'),
+  rollNumber:      z.string().min(1, 'Required').max(20, 'Too long'),
+  gender:          z.enum(['male', 'female', 'other']),
+  dateOfBirth: z.string().optional().refine(val => {
+    if (!val) return true;
+    const d = new Date(val);
+    const now = new Date();
+    const minAge = new Date(); minAge.setFullYear(now.getFullYear() - 25);
+    const maxAge = new Date(); maxAge.setFullYear(now.getFullYear() - 3);
+    return d >= minAge && d <= maxAge;
+  }, 'Date of birth must be between 3 and 25 years ago'),
+  admissionDate: z.string().min(1, 'Required').refine(val => {
+    const d = new Date(val);
+    const now = new Date();
+    const tenYearsAgo = new Date(); tenYearsAgo.setFullYear(now.getFullYear() - 10);
+    return d >= tenYearsAgo && d <= now;
+  }, 'Admission date must be within the last 10 years'),
+  bloodGroup:      z.string().optional(),
+  feeCategory:     z.string().default('regular'),
+  guardianName:    z.string().max(100, 'Too long').optional().or(z.literal('')),
+  guardianPhone:   z.string().regex(/^[\+\d\s\-()]{7,20}$/, 'Invalid phone').optional().or(z.literal('')),
+  guardianRelation:z.string().max(50, 'Too long').optional().or(z.literal('')),
+  currentStreet:   z.string().max(200, 'Too long').optional().or(z.literal('')),
+  currentCity:     z.string().max(100, 'Too long').optional().or(z.literal('')),
+  currentState:    z.string().max(100, 'Too long').optional().or(z.literal('')),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -33,6 +48,7 @@ type FormData = z.infer<typeof schema>;
 const steps = ['Personal Info', 'Academic', 'Guardian', 'Address'];
 
 export default function AddStudent() {
+  useWindowTitle('Add Student');
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
   const [createStudent, { isLoading }] = useCreateStudentMutation();

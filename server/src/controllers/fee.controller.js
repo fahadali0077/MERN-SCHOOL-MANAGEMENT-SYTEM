@@ -99,13 +99,19 @@ const feeController = {
       if (month) filter.month = parseInt(month);
       if (year) filter.year = parseInt(year);
 
+      const mongoose = require('mongoose');
+      // FIX: ObjectId(undefined) throws — guard when superAdmin has no schoolId
+      const statsMatch = schoolId
+        ? { schoolId: new mongoose.Types.ObjectId(schoolId) }
+        : {};
+
       const [invoices, total, stats] = await Promise.all([
         FeeInvoice.find(filter)
           .populate({ path: 'studentId', populate: { path: 'userId', select: 'firstName lastName' } })
           .sort(sort).skip(skip).limit(limit),
         FeeInvoice.countDocuments(filter),
         FeeInvoice.aggregate([
-          { $match: { schoolId: require('mongoose').Types.ObjectId(schoolId) } },
+          { $match: statsMatch },
           { $group: {
             _id: null,
             totalCollected: { $sum: '$paidAmount' },

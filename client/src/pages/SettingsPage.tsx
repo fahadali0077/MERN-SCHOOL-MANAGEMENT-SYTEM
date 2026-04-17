@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { setUser } from '../store/slices/authSlice';
 import { apiSlice } from '../store/api/apiSlice';
+import { useWindowTitle } from '../hooks';
 
 // FIX: Inject endpoint inline — settings are saved to PATCH /auth/preferences
 // which updates the user's preferences field in MongoDB.
@@ -40,6 +41,7 @@ const DEFAULT_NOTIFS = {
 };
 
 export default function SettingsPage() {
+  useWindowTitle('Settings');
   const user = useSelector((s: RootState) => s.auth.user);
   const dispatch = useDispatch();
   const [notifs, setNotifs] = useState(DEFAULT_NOTIFS);

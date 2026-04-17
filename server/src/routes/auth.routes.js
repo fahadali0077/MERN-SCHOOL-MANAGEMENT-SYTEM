@@ -17,6 +17,11 @@ router.post('/logout', authController.logout);
 router.patch('/change-password', authController.changePassword);
 // FIX: Added missing endpoints required by SettingsPage.tsx
 router.patch('/preferences', authController.updatePreferences);
+router.patch('/profile', authController.updateProfile);
 router.delete('/account', authController.deleteAccount);
+
+// Avatar upload — multer processes file, Cloudinary stores it
+const upload = require('../middlewares/upload.middleware');
+router.post('/avatar', upload.single('avatar'), upload.processAvatar, authController.uploadAvatar);
 
 module.exports = router;

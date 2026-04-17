@@ -1,3 +1,4 @@
+import { useWindowTitle } from '../../hooks';
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -13,6 +14,7 @@ const schema = z.object({
 }).refine(d => d.password === d.confirmPassword, { message: "Passwords don't match", path: ['confirmPassword'] });
 
 export default function ResetPassword() {
+  useWindowTitle('Reset Password');
   const [showPass, setShowPass] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

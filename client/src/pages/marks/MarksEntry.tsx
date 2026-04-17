@@ -3,8 +3,10 @@ import { useParams, Link } from 'react-router-dom';
 import { useGetExamQuery, useGetExamMarksQuery, useEnterMarksMutation, useGetSubjectsQuery } from '../../store/api/endpoints';
 import { ArrowLeft, Save, Loader2, BarChart3 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useWindowTitle } from '../../hooks';
 
 export default function MarksEntry() {
+  useWindowTitle('Marks Entry');
   const { examId } = useParams<{ examId: string }>();
   const [selectedSubject, setSelectedSubject] = useState('');
   const [marksData, setMarksData] = useState<Record<string, number>>({});

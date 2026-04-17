@@ -6,6 +6,7 @@ import { Bell, Plus, X, Loader2, Trash2, Eye } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { formatDistanceToNow } from 'date-fns';
+import { useWindowTitle } from '../../hooks';
 
 const typeColors: Record<string, string> = {
   general: 'badge-neutral', exam: 'badge-accent', holiday: 'badge-success',
@@ -17,13 +18,15 @@ const priorityDot: Record<string, string> = {
 };
 
 export default function NoticesPage() {
+  useWindowTitle('Notices');
   const [showCreate, setShowCreate] = useState(false);
   const [selected, setSelected] = useState<any>(null);
   const [typeFilter, setTypeFilter] = useState('');
+  const [search, setSearch] = useState('');
   const role = useSelector(selectUserRole);
   const canCreate = ['superAdmin', 'schoolAdmin', 'teacher'].includes(role || '');
 
-  const { data, isLoading } = useGetNoticesQuery({ type: typeFilter || undefined });
+  const { data, isLoading, isError } = useGetNoticesQuery({ type: typeFilter || undefined });
   const [createNotice, { isLoading: isCreating }] = useCreateNoticeMutation();
   const [deleteNotice] = useDeleteNoticeMutation();
 
@@ -51,6 +54,16 @@ export default function NoticesPage() {
       toast.error('Failed to delete');
     }
   };
+
+  if (isError) return (
+    <div className="p-6 flex items-center justify-center min-h-64">
+      <div className="card p-8 text-center max-w-sm">
+        <p className="text-danger font-semibold">Failed to load data</p>
+        <p className="text-text-secondary text-sm mt-2">Please refresh the page.</p>
+        <button onClick={() => window.location.reload()} className="btn-primary text-sm mt-4">Refresh</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-6 space-y-6">

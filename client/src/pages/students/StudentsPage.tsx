@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useGetStudentsQuery, useDeleteStudentMutation } from '../../store/api/endpoints';
 import { Plus, Search, Filter, MoreVertical, Eye, Edit, Trash2, Users, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useWindowTitle } from '../../hooks';
 
 const StatusBadge = ({ status }: { status: string }) => {
   const map: Record<string, string> = {
@@ -13,14 +14,26 @@ const StatusBadge = ({ status }: { status: string }) => {
 };
 
 export default function StudentsPage() {
+  useWindowTitle('Students');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [deleteStudent] = useDeleteStudentMutation();
 
-  const { data, isLoading } = useGetStudentsQuery({ page, limit: 25, search: debouncedSearch });
+  const { data, isLoading, isError } = useGetStudentsQuery({ page, limit: 25, search: debouncedSearch });
   const students = data?.data || [];
   const pagination = data?.pagination;
+
+  if (isError) {
+    return (
+      <div className="p-6 flex items-center justify-center min-h-64">
+        <div className="text-center">
+          <p className="text-danger font-semibold">Failed to load students</p>
+          <p className="text-text-secondary text-sm mt-1">Check your connection and try refreshing</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSearch = (val: string) => {
     setSearch(val);

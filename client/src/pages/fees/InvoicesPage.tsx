@@ -3,18 +3,31 @@ import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
 import { useGetStudentFeesQuery, useGetInvoicesQuery } from '../../store/api/endpoints';
 import { DollarSign, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { useWindowTitle } from '../../hooks';
 
 export default function InvoicesPage() {
+  useWindowTitle('Invoices');
   const user = useSelector(selectCurrentUser);
   const isAdmin = ['superAdmin', 'schoolAdmin'].includes(user?.role || '');
 
-  const { data: adminData, isLoading: adminLoading } = useGetInvoicesQuery({}, { skip: !isAdmin });
+  const { data: adminData, isLoading: adminLoading, isError: adminError } = useGetInvoicesQuery({}, { skip: !isAdmin });
   const { data: studentData, isLoading: studentLoading } = useGetStudentFeesQuery(
     user?._id || '',
     { skip: isAdmin || !user?._id }
   );
 
   const isLoading = isAdmin ? adminLoading : studentLoading;
+  const isError = isAdmin ? adminError : false;
+
+  if (isError) return (
+    <div className="p-6 flex items-center justify-center min-h-64">
+      <div className="card p-8 text-center max-w-sm">
+        <p className="text-danger font-semibold">Failed to load invoices</p>
+        <p className="text-text-secondary text-sm mt-2">Please refresh the page.</p>
+        <button onClick={() => window.location.reload()} className="btn-primary text-sm mt-4">Refresh</button>
+      </div>
+    </div>
+  );
 
   if (isAdmin) {
     const invoices = adminData?.data?.invoices || [];
@@ -28,8 +41,11 @@ export default function InvoicesPage() {
           <table>
             <thead><tr><th>Invoice</th><th>Student</th><th>Amount</th><th>Paid</th><th>Balance</th><th>Due Date</th><th>Status</th></tr></thead>
             <tbody>
-              {isLoading ? [...Array(5)].map((_, i) => <tr key={i}><td colSpan={7}><div className="skeleton h-5 rounded w-full"/></td></tr>)
-              : invoices.map((inv: any) => (
+              {isLoading
+                ? [...Array(5)].map((_, i) => <tr key={i}><td colSpan={7}><div className="skeleton h-5 rounded w-full"/></td></tr>)
+                : invoices.length === 0
+                ? <tr><td colSpan={7} className="text-center py-16 text-text-secondary text-sm">No invoices found. Go to Fee Management to generate invoices for a class.</td></tr>
+                : invoices.map((inv: any) => (
                 <tr key={inv._id}>
                   <td className="font-mono text-xs text-text-tertiary">{inv.invoiceNumber}</td>
                   <td className="text-sm text-text-primary">{inv.studentId?.userId?.firstName} {inv.studentId?.userId?.lastName}</td>

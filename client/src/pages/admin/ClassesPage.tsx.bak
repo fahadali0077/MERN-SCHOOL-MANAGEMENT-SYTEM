@@ -3,17 +3,15 @@ import { useGetClassesQuery, useCreateClassMutation, useGetSubjectsQuery, useCre
 import { Plus, BookOpen, Users, X, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { useWindowTitle } from '../../hooks';
 
 const DAYS = ['monday','tuesday','wednesday','thursday','friday','saturday'];
 
 export default function ClassesPage() {
-  useWindowTitle('Classes');
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showSubject, setShowSubject] = useState(false);
 
-  const { data: classesData, isLoading, isError } = useGetClassesQuery();
+  const { data: classesData, isLoading } = useGetClassesQuery();
   const { data: subjectsData } = useGetSubjectsQuery();
   const [createClass, { isLoading: isCreating }] = useCreateClassMutation();
   const [createSubject, { isLoading: isCreatingSubj }] = useCreateSubjectMutation();
@@ -51,16 +49,6 @@ export default function ClassesPage() {
     acc[cls.grade].push(cls);
     return acc;
   }, {});
-
-  if (isError) return (
-    <div className="p-6 flex items-center justify-center min-h-64">
-      <div className="card p-8 text-center max-w-sm">
-        <p className="text-danger font-semibold">Failed to load data</p>
-        <p className="text-text-secondary text-sm mt-2">Please refresh the page.</p>
-        <button onClick={() => window.location.reload()} className="btn-primary text-sm mt-4">Refresh</button>
-      </div>
-    </div>
-  );
 
   return (
     <div className="p-6 space-y-6">
@@ -101,7 +89,7 @@ export default function ClassesPage() {
         </div>
       ) : (
         <div className="space-y-3 animate-fade-up animate-fade-up-delay-2">
-          {[...Object.entries(gradeGroups)].sort(([a],[b]) => Number(a)-Number(b)).map(([grade, gradeClasses]) => (
+          {Object.entries(gradeGroups).sort(([a],[b]) => Number(a)-Number(b)).map(([grade, gradeClasses]) => (
             <div key={grade} className="card overflow-hidden">
               <div className="flex items-center gap-4 p-4 border-b border-white/5 bg-bg-tertiary/50">
                 <BookOpen size={16} className="text-accent"/>
@@ -181,7 +169,7 @@ export default function ClassesPage() {
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {[...cls.timetable].sort((a: any, b: any) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day)).map((slot: any, i: number) => (
+                                    {cls.timetable.sort((a: any, b: any) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day)).map((slot: any, i: number) => (
                                       <tr key={i} className="border-t border-white/5">
                                         <td className="p-2 text-text-secondary capitalize">{slot.day}</td>
                                         <td className="p-2 text-text-secondary">P{slot.period}</td>

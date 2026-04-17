@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useGetClassesQuery, useMarkAttendanceMutation, useGetAttendanceQuery, useGenerateQRMutation } from '../../store/api/endpoints';
 import { QrCode, CheckCircle, XCircle, Clock, RefreshCw, Save, Loader2, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useWindowTitle } from '../../hooks';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   present: { label: 'P', color: 'bg-success text-white', icon: <CheckCircle size={12} /> },
@@ -11,6 +12,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.R
 };
 
 export default function AttendancePage() {
+  useWindowTitle('Attendance');
   const today = new Date().toISOString().split('T')[0];
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedDate, setSelectedDate] = useState(today);
@@ -18,7 +20,7 @@ export default function AttendancePage() {
   const [showQR, setShowQR] = useState(false);
   const [qrData, setQrData] = useState<{ qrImage: string; expiresAt: string } | null>(null);
 
-  const { data: classesData } = useGetClassesQuery();
+  const { data: classesData, isError } = useGetClassesQuery();
   const classes = classesData?.data || [];
 
   const { data: attendanceData, refetch } = useGetAttendanceQuery(
@@ -96,6 +98,16 @@ export default function AttendancePage() {
   const absent = Object.values(records).filter(s => s === 'absent').length;
   const late = Object.values(records).filter(s => s === 'late').length;
   const total = Object.keys(records).length;
+
+  if (isError) return (
+    <div className="p-6 flex items-center justify-center min-h-64">
+      <div className="card p-8 text-center max-w-sm">
+        <p className="text-danger font-semibold">Failed to load attendance data</p>
+        <p className="text-text-secondary text-sm mt-2">Please refresh the page.</p>
+        <button onClick={() => window.location.reload()} className="btn-primary text-sm mt-4">Refresh</button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="p-6 space-y-6">

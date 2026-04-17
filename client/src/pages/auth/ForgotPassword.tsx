@@ -1,4 +1,5 @@
 // ForgotPassword.tsx
+import { useWindowTitle } from '../../hooks';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -11,6 +12,7 @@ import toast from 'react-hot-toast';
 const schema = z.object({ email: z.string().email('Enter a valid email') });
 
 export default function ForgotPassword() {
+  useWindowTitle('Forgot Password');
   const [forgot, { isLoading, isSuccess }] = useForgotPasswordMutation();
   const { register, handleSubmit, formState: { errors } } = useForm({ resolver: zodResolver(schema) });
 

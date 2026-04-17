@@ -1,8 +1,10 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Home, ArrowLeft, Search } from 'lucide-react';
+import { useWindowTitle } from '../hooks';
 
 export default function NotFound() {
+  useWindowTitle('Page Not Found');
   const navigate = useNavigate();
 
   return (

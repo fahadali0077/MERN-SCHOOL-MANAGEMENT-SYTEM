@@ -50,6 +50,9 @@ const baseQueryWithReauth = async (args: any, api: any, extraOptions: any) => {
 export const apiSlice = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithReauth,
+  // Refetch when component mounts after navigating back — fixes stale data on browser back
+  refetchOnMountOrArgChange: 30,
+  refetchOnFocus: false,
   tagTypes: [
     'User', 'Students', 'Teachers', 'Classes', 'Subjects',
     'Attendance', 'Exams', 'Marks', 'Fees', 'Invoices',

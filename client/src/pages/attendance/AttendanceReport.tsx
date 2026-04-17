@@ -6,6 +6,7 @@ import {
   ResponsiveContainer, Cell
 } from 'recharts';
 import { Download, Users, TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
+import { useWindowTitle } from '../../hooks';
 
 // ─── Per-student attendance row ───────────────────────────────────────────────
 // Each row fetches its own student's attendance from the API.
@@ -64,6 +65,7 @@ function StudentAttendanceRow({ student, month, year }: {
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function AttendanceReport() {
+  useWindowTitle('Attendance Report');
   const today = new Date();
   const [classFilter, setClassFilter] = useState('');
   const [month, setMonth] = useState(String(today.getMonth() + 1));

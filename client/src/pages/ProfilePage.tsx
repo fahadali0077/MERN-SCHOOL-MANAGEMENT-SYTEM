@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
-import { User, Mail, Phone, Lock, Shield, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
+import { useSelector, useDispatch } from 'react-redux';
+import { User, Mail, Phone, Lock, Shield, Eye, EyeOff, Loader2, CheckCircle, Upload, Edit2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { RootState } from '../store';
-import { useChangePasswordMutation } from '../store/api/endpoints';
+import { useChangePasswordMutation, useUpdateProfileMutation, useUploadAvatarMutation } from '../store/api/endpoints';
+import { setUser } from '../store/slices/authSlice';
+
+import { useWindowTitle } from '../hooks';
 
 const roleLabels: Record<string, { label: string; color: string }> = {
   superAdmin: { label: 'Super Admin', color: '#EF4444' },
@@ -15,10 +18,41 @@ const roleLabels: Record<string, { label: string; color: string }> = {
 };
 
 export default function ProfilePage() {
+  useWindowTitle('My Profile');
   const user = useSelector((state: RootState) => state.auth.user);
+  const dispatch = useDispatch();
   const [showPass, setShowPass] = useState(false);
   const [passSection, setPassSection] = useState(false);
+  const [editProfile, setEditProfile] = useState(false);
   const [changePassword, { isLoading }] = useChangePasswordMutation();
+  const [updateProfile, { isLoading: isUpdatingProfile }] = useUpdateProfileMutation();
+  const [uploadAvatar, { isLoading: isUploadingAvatar }] = useUploadAvatarMutation();
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
+
+  const profileForm = useForm<{ firstName: string; lastName: string }>({
+    defaultValues: { firstName: user?.firstName || '', lastName: user?.lastName || '' },
+  });
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData(); fd.append('avatar', file);
+    try {
+      const res = await uploadAvatar(fd).unwrap();
+      if (res?.data?.user) dispatch(setUser(res.data.user));
+      toast.success('Avatar updated');
+    } catch (err: any) { toast.error(err?.data?.message || 'Upload failed'); }
+    if (avatarInputRef.current) avatarInputRef.current.value = '';
+  };
+
+  const onUpdateProfile = async (data: any) => {
+    try {
+      const res = await updateProfile(data).unwrap();
+      if (res?.data?.user) dispatch(setUser(res.data.user));
+      toast.success('Profile updated');
+      setEditProfile(false);
+    } catch (err: any) { toast.error(err?.data?.message || 'Update failed'); }
+  };
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<{
     currentPassword: string;
@@ -67,9 +101,25 @@ export default function ProfilePage() {
         <div className="flex items-start gap-6">
           {/* Avatar */}
           <div className="relative flex-shrink-0">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center text-white text-2xl font-display font-bold shadow-glow-sm">
-              {user.firstName?.[0]}{user.lastName?.[0]}
-            </div>
+            <input ref={avatarInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+            <button
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={isUploadingAvatar}
+              className="w-20 h-20 rounded-2xl bg-gradient-to-br from-accent to-purple-500 flex items-center justify-center text-white text-2xl font-display font-bold shadow-glow-sm relative group overflow-hidden"
+              title="Click to change avatar"
+            >
+              {user.avatar ? (
+                <img src={user.avatar} alt="avatar" className="w-full h-full object-cover rounded-2xl" />
+              ) : (
+                <span>{user.firstName?.[0]}{user.lastName?.[0]}</span>
+              )}
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-2xl">
+                {isUploadingAvatar
+                  ? <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  : <Upload size={16} className="text-white" />
+                }
+              </div>
+            </button>
             {roleInfo && (
               <span
                 className="absolute -bottom-2 -right-2 px-2 py-0.5 rounded-full text-[10px] font-bold text-white"
@@ -118,6 +168,42 @@ export default function ProfilePage() {
           ))}
         </div>
       </div>
+
+      {/* Edit Profile */}
+      {editProfile ? (
+        <div className="card p-6 animate-fade-up">
+          <h3 className="font-display font-semibold text-text-primary mb-4">Edit Profile</h3>
+          <form onSubmit={profileForm.handleSubmit(onUpdateProfile)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">First Name</label>
+                <input {...profileForm.register('firstName', { required: true })} className="input mt-1.5" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Last Name</label>
+                <input {...profileForm.register('lastName', { required: true })} className="input mt-1.5" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Phone</label>
+              <input {...profileForm.register('phone')} placeholder="+1 234 567 890" className="input mt-1.5" />
+            </div>
+            <div className="flex gap-3">
+              <button type="button" onClick={() => setEditProfile(false)} className="btn-secondary flex-1">Cancel</button>
+              <button type="submit" disabled={isUpdatingProfile} className="btn-primary flex-1 justify-center">
+                {isUpdatingProfile && <Loader2 size={14} className="animate-spin" />}
+                {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : (
+        <div className="flex justify-end">
+          <button onClick={() => { setEditProfile(true); profileForm.reset({ firstName: user.firstName, lastName: user.lastName }); }} className="btn-secondary text-sm flex items-center gap-2">
+            <Edit2 size={14} /> Edit Profile
+          </button>
+        </div>
+      )}
 
       {/* Change password */}
       <div className="card p-6 animate-fade-up animate-fade-up-delay-2">
