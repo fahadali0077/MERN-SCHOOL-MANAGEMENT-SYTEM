@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+
 import { useWindowTitle } from '../hooks';
-School, Users, ClipboardList, BarChart3, DollarSign, Bell,
+import {
+  School, Users, ClipboardList, BarChart3, DollarSign, Bell,
   QrCode, Shield, Zap, Globe, ArrowRight, CheckCircle, Star, ChevronRight
 } from 'lucide-react';
 
