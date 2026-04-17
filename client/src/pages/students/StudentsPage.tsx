@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGetStudentsQuery, useDeleteStudentMutation } from '../../store/api/endpoints';
-import { Plus, Search, Filter, MoreVertical, Eye, Edit, Trash2, Users, Download } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Download } from 'lucide-react';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import toast from 'react-hot-toast';
 import { useWindowTitle } from '../../hooks';
 
@@ -19,6 +20,7 @@ export default function StudentsPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [deleteStudent] = useDeleteStudentMutation();
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
 
   const { data, isLoading, isError } = useGetStudentsQuery({ page, limit: 25, search: debouncedSearch });
   const students = data?.data || [];
@@ -44,13 +46,19 @@ export default function StudentsPage() {
     }, 400);
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Deactivate ${name}?`)) return;
+  const handleDelete = (id: string, name: string) => {
+    setConfirmDelete({ id, name });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
     try {
-      await deleteStudent(id).unwrap();
-      toast.success('Student deactivated');
+      await deleteStudent(confirmDelete.id).unwrap();
+      toast.success(`${confirmDelete.name} deactivated`);
     } catch {
       toast.error('Failed to deactivate student');
+    } finally {
+      setConfirmDelete(null);
     }
   };
 
@@ -65,8 +73,35 @@ export default function StudentsPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="btn-secondary flex items-center gap-2 text-sm">
-            <Download size={15} /> Export
+          <button
+            onClick={() => {
+              const rows = students.map((s: any) => {
+                const u = s.userId;
+                const cls = s.classId;
+                return [
+                  `${u?.firstName || ''} ${u?.lastName || ''}`.trim(),
+                  u?.email || '',
+                  s.rollNumber || '',
+                  s.admissionNumber || '',
+                  cls ? `${cls.name} ${cls.section}` : '',
+                  s.status || '',
+                  s.admissionDate ? new Date(s.admissionDate).toLocaleDateString() : '',
+                  s.feeCategory || '',
+                ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+              });
+              const csv = [
+                '"Name","Email","Roll No","Admission No","Class","Status","Admission Date","Fee Category"',
+                ...rows
+              ].join('\n');
+              const a = document.createElement('a');
+              a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+              a.download = `students-${new Date().toISOString().slice(0,10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(a.href);
+            }}
+            className="btn-secondary flex items-center gap-2 text-sm"
+          >
+            <Download size={15} /> Export CSV
           </button>
           <Link to="/dashboard/students/add" className="btn-primary text-sm">
             <Plus size={15} /> Add Student
@@ -215,6 +250,16 @@ export default function StudentsPage() {
           </div>
         </div>
       )}
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Deactivate Student"
+        message={`Are you sure you want to deactivate ${confirmDelete?.name}? They will lose access to the system.`}
+        confirmLabel="Deactivate"
+        cancelLabel="Cancel"
+        danger
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

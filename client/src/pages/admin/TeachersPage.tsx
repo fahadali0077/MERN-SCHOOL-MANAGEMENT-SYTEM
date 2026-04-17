@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGetTeachersQuery, useCreateTeacherMutation, useUpdateTeacherMutation, useDeleteTeacherMutation } from '../../store/api/endpoints';
 import { Plus, Search, X, Loader2, GraduationCap, Mail, Phone, Edit2, Trash2 } from 'lucide-react';
+import ConfirmDialog from '../../components/ui/ConfirmDialog';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -29,6 +30,7 @@ export default function TeachersPage() {
   // FIX: updateTeacher was imported but never called — now wired to edit modal submit
   const [updateTeacher, { isLoading: isUpdating }] = useUpdateTeacherMutation();
   const [deleteTeacher] = useDeleteTeacherMutation();
+  const [confirmDelete, setConfirmDelete] = useState<any | null>(null);
 
   const teachers = data?.data || [];
   const pagination = data?.pagination;
@@ -48,13 +50,17 @@ export default function TeachersPage() {
   };
 
 
-  const handleDelete = async (teacher: any) => {
-    if (!confirm(`Deactivate ${teacher.firstName} ${teacher.lastName}? They will no longer be able to log in.`)) return;
+  const handleDelete = (teacher: any) => setConfirmDelete(teacher);
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDelete) return;
     try {
-      await deleteTeacher(teacher._id).unwrap();
+      await deleteTeacher(confirmDelete._id).unwrap();
       toast.success('Teacher deactivated');
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to deactivate teacher');
+    } finally {
+      setConfirmDelete(null);
     }
   };
 
@@ -220,6 +226,16 @@ export default function TeachersPage() {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Deactivate Teacher"
+        message={`Are you sure you want to deactivate ${confirmDelete?.firstName} ${confirmDelete?.lastName}? They will lose access to the system.`}
+        confirmLabel="Deactivate"
+        danger
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDelete(null)}
+      />
 
       {/* FIX: Edit Modal — this was completely missing */}
       {editTeacher && (

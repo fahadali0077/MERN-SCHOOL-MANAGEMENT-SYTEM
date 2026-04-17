@@ -88,6 +88,55 @@ const studentController = {
         await emailService.sendWelcomeEmail(user, tempPassword);
       } catch (e) {}
 
+      // ─── Auto-generate fee invoice for admission month ────────────────────
+      // If a fee structure exists matching the student's class + feeCategory,
+      // automatically create their first invoice so admins don't have to do it manually.
+      try {
+        const { FeeStructure, FeeInvoice } = require('../models/Fee.model');
+        const feeCategory = studentData.feeCategory || 'regular';
+        const now = new Date();
+
+        // Find a matching fee structure (by class or school-wide)
+        const structure = await FeeStructure.findOne({
+          schoolId,
+          isActive: true,
+          $or: [{ classId: classId }, { classId: null }, { classId: { $exists: false } }],
+          category: feeCategory,
+        }).sort({ classId: -1 }); // prefer class-specific over generic
+
+        if (structure) {
+          const invoiceCount = await FeeInvoice.countDocuments({ schoolId });
+          const School = require('../models/School.model');
+          const school = await School.findById(schoolId).select('code').lean();
+          const schoolCode = school?.code || 'SCH';
+          const invoiceNumber = `${schoolCode}-${now.getFullYear().toString().slice(-2)}${String(now.getMonth()+1).padStart(2,'0')}-${String(invoiceCount+1).padStart(5,'0')}`;
+
+          const discount = student.discount || 0;
+          const items = structure.components.map(c => ({
+            name: c.name, amount: c.amount,
+            discount: (c.amount * discount) / 100,
+            finalAmount: c.amount - (c.amount * discount) / 100,
+          }));
+          const subtotal = items.reduce((a, i) => a + i.amount, 0);
+          const discountAmt = items.reduce((a, i) => a + i.discount, 0);
+          const totalAmount = subtotal - discountAmt;
+          const dueDate = new Date(now.getFullYear(), now.getMonth(), structure.components[0]?.dueDay || 15);
+
+          await FeeInvoice.create({
+            invoiceNumber, schoolId,
+            studentId: student._id, feeStructureId: structure._id,
+            month: now.getMonth() + 1, year: now.getFullYear(),
+            dueDate, items, subtotal,
+            discount: discountAmt, totalAmount, paidAmount: 0, balanceDue: totalAmount,
+          });
+        }
+      } catch (feeErr) {
+        // Non-fatal: log but don't block student creation response
+        const logger = require('../utils/logger');
+        logger.warn(`Auto-fee-generation failed for student ${student._id}: ${feeErr.message}`);
+      }
+      // ─────────────────────────────────────────────────────────────────────
+
       await cache.delPattern(`students:${schoolId}:*`);
 
       const populated = await Student.findById(student._id)
