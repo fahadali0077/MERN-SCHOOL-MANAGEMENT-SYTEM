@@ -149,7 +149,7 @@ const teacherController = {
       await cache.del(`user:${teacher._id}`);
       return successResponse(res, null, 'Teacher deactivated');
     } catch (err) { next(err); }
-  },
+  }
 
   async uploadAvatar(req, res, next) {
     try {
