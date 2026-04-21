@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import {
+
 import { useWindowTitle } from '../hooks';
+import {
   School, Users, ClipboardList, BarChart3, DollarSign, Bell,
   QrCode, Shield, Zap, Globe, ArrowRight, CheckCircle, Star, ChevronRight
 } from 'lucide-react';
@@ -176,7 +177,7 @@ export default function Landing() {
                 <div className="col-span-2 rounded-xl border border-white/5 bg-bg-tertiary p-4 h-32">
                   <p className="text-xs text-text-tertiary mb-2">Attendance Trend</p>
                   <div className="flex items-end gap-1 h-16">
-                    {[65,80,75,90,85,94,88,92,96,89,94,97].map((h, i) => (
+                    {[65, 80, 75, 90, 85, 94, 88, 92, 96, 89, 94, 97].map((h, i) => (
                       <div key={i} className="flex-1 rounded-sm" style={{ height: `${h}%`, background: i === 11 ? '#0066FF' : 'rgba(0,102,255,0.3)' }} />
                     ))}
                   </div>
@@ -282,11 +283,10 @@ export default function Landing() {
                   ))}
                 </ul>
                 <Link to="/auth/register"
-                  className={`block text-center py-2.5 rounded-lg font-semibold text-sm transition-all ${
-                    plan.highlight
-                      ? 'bg-accent text-white hover:bg-accent-hover shadow-glow'
-                      : 'bg-white/5 text-text-primary hover:bg-white/10 border border-white/10'
-                  }`}>
+                  className={`block text-center py-2.5 rounded-lg font-semibold text-sm transition-all ${plan.highlight
+                    ? 'bg-accent text-white hover:bg-accent-hover shadow-glow'
+                    : 'bg-white/5 text-text-primary hover:bg-white/10 border border-white/10'
+                    }`}>
                   Get started
                 </Link>
               </div>
