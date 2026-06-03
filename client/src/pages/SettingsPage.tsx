@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Moon, Trash2, Loader2 } from 'lucide-react';
+import { Bell, Moon, Sun, Trash2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store';
 import { setUser } from '../store/slices/authSlice';
+import { setTheme, selectTheme } from '../store/slices/uiSlice';
 import { apiSlice } from '../store/api/apiSlice';
 import { useWindowTitle } from '../hooks';
 
@@ -44,6 +45,7 @@ export default function SettingsPage() {
   useWindowTitle('Settings');
   const user = useSelector((s: RootState) => s.auth.user);
   const dispatch = useDispatch();
+  const theme = useSelector(selectTheme);
   const [notifs, setNotifs] = useState(DEFAULT_NOTIFS);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
@@ -165,28 +167,35 @@ export default function SettingsPage() {
             <p className="text-xs text-text-tertiary">Customize your interface</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3 border-t border-white/5 pt-4">
-          {[
-            { label: 'Dark Mode', sub: 'Current theme', active: true },
-            { label: 'Light Mode', sub: 'Coming soon', active: false },
-          ].map((theme) => (
-            <button
-              key={theme.label}
-              disabled={!theme.active}
-              type="button"
-              className={`p-4 rounded-xl border text-left transition-all ${
-                theme.active
-                  ? 'border-accent bg-accent/5'
-                  : 'border-white/5 opacity-40 cursor-not-allowed'
-              }`}
-            >
-              <div className="w-6 h-6 rounded-full border-2 border-accent flex items-center justify-center mb-2">
-                {theme.active && <div className="w-3 h-3 rounded-full bg-accent" />}
-              </div>
-              <p className="text-sm font-medium text-text-primary">{theme.label}</p>
-              <p className="text-xs text-text-tertiary mt-0.5">{theme.sub}</p>
-            </button>
-          ))}
+        <div className="grid grid-cols-2 gap-3 border-t border-border pt-4">
+          {([
+            { value: 'dark' as const, label: 'Dark Mode', sub: 'Easy on the eyes', icon: Moon },
+            { value: 'light' as const, label: 'Light Mode', sub: 'Bright and clean', icon: Sun },
+          ]).map((opt) => {
+            const active = theme === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => { dispatch(setTheme(opt.value)); toast.success(`${opt.label} enabled`); }}
+                aria-pressed={active}
+                className={`p-4 rounded-xl border text-left transition-all ${
+                  active
+                    ? 'border-accent bg-accent/5'
+                    : 'border-border hover:border-border-hover'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <opt.icon size={18} className={active ? 'text-accent' : 'text-text-tertiary'} />
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${active ? 'border-accent' : 'border-text-tertiary'}`}>
+                    {active && <div className="w-2.5 h-2.5 rounded-full bg-accent" />}
+                  </div>
+                </div>
+                <p className="text-sm font-medium text-text-primary">{opt.label}</p>
+                <p className="text-xs text-text-tertiary mt-0.5">{opt.sub}</p>
+              </button>
+            );
+          })}
         </div>
       </div>
 

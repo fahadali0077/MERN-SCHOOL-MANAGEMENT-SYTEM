@@ -4,37 +4,71 @@
 @tailwind components;
 @tailwind utilities;
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* ─── THEME TOKENS ────────────────────────────────────────────────────────────
+ * Variables are defined at :root level (NOT inside @layer components, so they are
+ * never purged or scoped). The dark theme is the default. Adding the `.light`
+ * class to <html> swaps the whole palette. The Tailwind config references these
+ * same variables, so utility classes (bg-bg-primary, text-text-primary, ...)
+ * repaint automatically when the theme class flips.
+ * ──────────────────────────────────────────────────────────────────────────── */
+:root,
+:root.dark {
+  --bg-primary: #0D0D1A;
+  --bg-secondary: #111827;
+  --bg-tertiary: #1A1A2E;
+  --text-primary: #F1F1EE;
+  --text-secondary: #9CA3AF;
+  --text-tertiary: #6B7280;
+  --accent: #0066FF;
+  --accent-hover: #0052CC;
+  --accent-glow: rgba(0, 102, 255, 0.35);
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.2);
+  --hover-surface: rgba(255, 255, 255, 0.05);
+  --hover-surface-strong: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.25);
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --row-hover: rgba(255, 255, 255, 0.02);
+  --radius-card: 16px;
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 8px 40px rgba(0, 0, 0, 0.6);
+  color-scheme: dark;
+}
 
-@layer components {
-  .input {
-    background: var(--bg-tertiary);
-    border: 1px solid var(--border);
-    padding: 12px 16px;
-    /* ... rest of styles */
-  }
+:root.light {
+  --bg-primary: #F4F6FB;
+  --bg-secondary: #FFFFFF;
+  --bg-tertiary: #EEF1F7;
+  --text-primary: #111827;
+  --text-secondary: #4B5563;
+  --text-tertiary: #9CA3AF;
+  --accent: #0066FF;
+  --accent-hover: #0052CC;
+  --accent-glow: rgba(0, 102, 255, 0.25);
+  --success: #059669;
+  --warning: #D97706;
+  --danger: #DC2626;
+  --border: rgba(17, 24, 39, 0.10);
+  --border-hover: rgba(17, 24, 39, 0.22);
+  --hover-surface: rgba(17, 24, 39, 0.04);
+  --hover-surface-strong: rgba(17, 24, 39, 0.08);
+  --scrollbar-thumb: rgba(17, 24, 39, 0.18);
+  --scrollbar-thumb-hover: rgba(17, 24, 39, 0.30);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(17, 24, 39, 0.08);
+  --row-hover: rgba(17, 24, 39, 0.03);
+  --radius-card: 16px;
+  --shadow-card: 0 4px 24px rgba(17, 24, 39, 0.08);
+  --shadow-card-hover: 0 8px 40px rgba(17, 24, 39, 0.14);
+  color-scheme: light;
+}
 
-
-  :root {
-    --bg-primary: #0D0D1A;
-    --bg-secondary: #111827;
-    --bg-tertiary: #1A1A2E;
-    --text-primary: #F1F1EE;
-    --text-secondary: #888888;
-    --text-tertiary: #555555;
-    --accent: #0066FF;
-    --accent-glow: rgba(0, 102, 255, 0.35);
-    --success: #10B981;
-    --warning: #F59E0B;
-    --danger: #EF4444;
-    --border: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(255, 255, 255, 0.2);
-    --radius-card: 16px;
-    --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
-  }
-
+@layer base {
   * {
     margin: 0;
     padding: 0;
@@ -55,21 +89,18 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  /* Typography */
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
+  h1, h2, h3, h4, h5, h6 {
     font-family: 'Clash Display', sans-serif;
     letter-spacing: -0.03em;
     line-height: 1.1;
     color: var(--text-primary);
   }
+}
 
+@layer components {
   .display-hero {
     font-size: clamp(56px, 8vw, 96px);
     font-weight: 800;
@@ -77,22 +108,10 @@
     line-height: 1.0;
   }
 
-  .h1 {
-    font-size: clamp(40px, 5vw, 64px);
-    font-weight: 700;
-  }
+  .h1 { font-size: clamp(40px, 5vw, 64px); font-weight: 700; }
+  .h2 { font-size: clamp(28px, 3.5vw, 44px); font-weight: 700; }
+  .h3 { font-size: clamp(22px, 2.5vw, 32px); font-weight: 600; }
 
-  .h2 {
-    font-size: clamp(28px, 3.5vw, 44px);
-    font-weight: 700;
-  }
-
-  .h3 {
-    font-size: clamp(22px, 2.5vw, 32px);
-    font-weight: 600;
-  }
-
-  /* Gradient text */
   .gradient-text {
     background: linear-gradient(135deg, #667eea, #0066FF);
     -webkit-background-clip: text;
@@ -100,16 +119,14 @@
     background-clip: text;
   }
 
-  /* Glass morphism */
   .glass {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--glass-bg);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid var(--glass-border);
     border-radius: 16px;
   }
 
-  /* Cards */
   .card {
     background: var(--bg-secondary);
     border-radius: var(--radius-card);
@@ -121,29 +138,14 @@
   .card:hover {
     transform: scale(1.015);
     border-color: var(--border-hover);
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6);
+    box-shadow: var(--shadow-card-hover);
   }
 
-  /* Scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-primary); }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
-  ::-webkit-scrollbar-track {
-    background: var(--bg-primary);
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 3px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.25);
-  }
-
-  /* Buttons */
   .btn-primary {
     background: var(--accent);
     color: white;
@@ -160,10 +162,12 @@
   }
 
   .btn-primary:hover {
-    background: #0052CC;
+    background: var(--accent-hover);
     box-shadow: 0 0 24px var(--accent-glow);
     transform: translateY(-1px);
   }
+
+  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
   .btn-secondary {
     background: transparent;
@@ -183,7 +187,6 @@
     background: rgba(0, 102, 255, 0.05);
   }
 
-  /* Form inputs */
   .input {
     background: var(--bg-tertiary);
     border: 1px solid var(--border);
@@ -202,11 +205,8 @@
     box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
   }
 
-  .input::placeholder {
-    color: var(--text-tertiary);
-  }
+  .input::placeholder { color: var(--text-tertiary); }
 
-  /* Status badges */
   .badge {
     display: inline-flex;
     align-items: center;
@@ -217,37 +217,12 @@
     letter-spacing: 0.02em;
   }
 
-  .badge-success {
-    background: rgba(16, 185, 129, 0.15);
-    color: #10B981;
-    border: 1px solid rgba(16, 185, 129, 0.2);
-  }
+  .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+  .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+  .badge-danger  { background: rgba(239, 68, 68, 0.15);  color: var(--danger);  border: 1px solid rgba(239, 68, 68, 0.2); }
+  .badge-accent  { background: rgba(0, 102, 255, 0.15);  color: var(--accent);  border: 1px solid rgba(0, 102, 255, 0.2); }
+  .badge-neutral { background: var(--hover-surface-strong); color: var(--text-secondary); border: 1px solid var(--border); }
 
-  .badge-warning {
-    background: rgba(245, 158, 11, 0.15);
-    color: #F59E0B;
-    border: 1px solid rgba(245, 158, 11, 0.2);
-  }
-
-  .badge-danger {
-    background: rgba(239, 68, 68, 0.15);
-    color: #EF4444;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-  }
-
-  .badge-accent {
-    background: rgba(0, 102, 255, 0.15);
-    color: #0066FF;
-    border: 1px solid rgba(0, 102, 255, 0.2);
-  }
-
-  .badge-neutral {
-    background: rgba(136, 136, 136, 0.15);
-    color: #888888;
-    border: 1px solid rgba(136, 136, 136, 0.2);
-  }
-
-  /* Table */
   .table-container {
     width: 100%;
     overflow-x: auto;
@@ -255,10 +230,7 @@
     border: 0.5px solid var(--border);
   }
 
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
+  table { width: 100%; border-collapse: collapse; }
 
   thead th {
     background: var(--bg-tertiary);
@@ -279,15 +251,9 @@
     border-bottom: 0.5px solid var(--border);
   }
 
-  tbody tr:last-child td {
-    border-bottom: none;
-  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--row-hover); }
 
-  tbody tr:hover td {
-    background: rgba(255, 255, 255, 0.02);
-  }
-
-  /* Loading skeleton */
   .skeleton {
     background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
     background-size: 200% 100%;
@@ -296,16 +262,10 @@
   }
 
   @keyframes shimmer {
-    0% {
-      background-position: 200% 0;
-    }
-
-    100% {
-      background-position: -200% 0;
-    }
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
   }
 
-  /* Sidebar */
   .sidebar-link {
     display: flex;
     align-items: center;
@@ -321,7 +281,7 @@
   }
 
   .sidebar-link:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-surface);
     color: var(--text-primary);
   }
 
@@ -331,72 +291,35 @@
     border: 0.5px solid rgba(0, 102, 255, 0.2);
   }
 
-  /* Animations */
   .animate-fade-up {
     opacity: 0;
     transform: translateY(30px);
     animation: fadeUp 0.6s ease forwards;
   }
 
-  .animate-fade-up-delay-1 {
-    animation-delay: 0.1s;
-  }
-
-  .animate-fade-up-delay-2 {
-    animation-delay: 0.2s;
-  }
-
-  .animate-fade-up-delay-3 {
-    animation-delay: 0.3s;
-  }
-
-  .animate-fade-up-delay-4 {
-    animation-delay: 0.4s;
-  }
+  .animate-fade-up-delay-1 { animation-delay: 0.1s; }
+  .animate-fade-up-delay-2 { animation-delay: 0.2s; }
+  .animate-fade-up-delay-3 { animation-delay: 0.3s; }
+  .animate-fade-up-delay-4 { animation-delay: 0.4s; }
 
   @keyframes fadeUp {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  /* Bento Grid */
-  .bento-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-  }
-
-  .bento-span-2 {
-    grid-column: span 2;
-  }
-
-  .bento-row-2 {
-    grid-row: span 2;
-  }
+  .bento-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .bento-span-2 { grid-column: span 2; }
+  .bento-row-2 { grid-row: span 2; }
 
   @media (max-width: 1024px) {
-    .bento-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .bento-span-2 {
-      grid-column: span 1;
-    }
+    .bento-grid { grid-template-columns: repeat(2, 1fr); }
+    .bento-span-2 { grid-column: span 1; }
   }
 
   @media (max-width: 768px) {
-    .bento-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .bento-row-2 {
-      grid-row: span 1;
-    }
+    .bento-grid { grid-template-columns: 1fr; }
+    .bento-row-2 { grid-row: span 1; }
   }
 
-  /* Stat cards */
   .stat-card {
     background: var(--bg-secondary);
     border: 0.5px solid var(--border);
@@ -408,44 +331,29 @@
   .stat-card:hover {
     border-color: var(--border-hover);
     transform: translateY(-2px);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-card-hover);
   }
 }
+
 /*
  * ─── PRINT STYLES ─────────────────────────────────────────────────────────────
- * Append these rules to the BOTTOM of client/src/styles/globals.css
- *
- * They are activated when the user clicks "Print Report Card" (window.print())
- * or uses Ctrl+P / Cmd+P on the report card page.
- *
- * The sidebar, topbar, navigation, and all non-report-card content are hidden.
- * The report card card renders white-on-light for standard printers.
+ * Activated by "Print Report Card" (window.print()) / Ctrl+P on the report card.
  */
-
 @media print {
-  /* Hide everything that isn't the report card */
-  aside,
-  header,
-  nav,
+  aside, header, nav,
   .print\:hidden,
   [class*="animate-"],
   [class*="sidebar"] {
     display: none !important;
   }
 
-  /* Full-page report card with white background */
-  body,
-  #root,
-  .flex,
-  .flex-1,
-  main {
+  body, #root, .flex, .flex-1, main {
     display: block !important;
     background: #ffffff !important;
     color: #000000 !important;
     overflow: visible !important;
   }
 
-  /* Force the card itself to fill the page */
   .card {
     border: 1px solid #e5e7eb !important;
     box-shadow: none !important;
@@ -453,17 +361,41 @@
     break-inside: avoid;
   }
 
-  /* Make text dark for printing */
-  .text-text-primary,
-  .text-text-secondary,
-  .text-text-tertiary,
+  .text-text-primary, .text-text-secondary, .text-text-tertiary,
   h1, h2, h3, p, span, td, th {
     color: #111827 !important;
   }
 
-  /* Page setup */
-  @page {
-    size: A4 portrait;
-    margin: 15mm;
-  }
+  @page { size: A4 portrait; margin: 15mm; }
 }
+
+/*
+ * ─── LIGHT-MODE COMPATIBILITY LAYER ───────────────────────────────────────────
+ * Many components use hardcoded Tailwind white-opacity utilities (border-white/5,
+ * bg-white/5, hover:bg-white/5, etc.) for subtle separators and hover states.
+ * Those are invisible (or white-on-white) in light mode. Rather than rewrite ~140
+ * usages across 28 files, we remap the exact utilities in use to dark-tinted
+ * equivalents whenever the .light theme is active. Tailwind emits these as
+ * `rgb(255 255 255 / <alpha>)`, so we override with the same selectors.
+ * ──────────────────────────────────────────────────────────────────────────── */
+:root.light .border-white\/5  { border-color: rgba(17, 24, 39, 0.07) !important; }
+:root.light .border-white\/8  { border-color: rgba(17, 24, 39, 0.09) !important; }
+:root.light .border-white\/10 { border-color: rgba(17, 24, 39, 0.10) !important; }
+:root.light .border-white\/20 { border-color: rgba(17, 24, 39, 0.18) !important; }
+:root.light .border-white\/40 { border-color: rgba(17, 24, 39, 0.30) !important; }
+
+:root.light .bg-white\/2  { background-color: rgba(17, 24, 39, 0.025) !important; }
+:root.light .bg-white\/3  { background-color: rgba(17, 24, 39, 0.035) !important; }
+:root.light .bg-white\/5  { background-color: rgba(17, 24, 39, 0.05) !important; }
+:root.light .bg-white\/8  { background-color: rgba(17, 24, 39, 0.07) !important; }
+:root.light .bg-white\/10 { background-color: rgba(17, 24, 39, 0.09) !important; }
+:root.light .bg-white\/15 { background-color: rgba(17, 24, 39, 0.12) !important; }
+
+:root.light .hover\:bg-white\/2:hover  { background-color: rgba(17, 24, 39, 0.03) !important; }
+:root.light .hover\:bg-white\/3:hover  { background-color: rgba(17, 24, 39, 0.04) !important; }
+:root.light .hover\:bg-white\/5:hover  { background-color: rgba(17, 24, 39, 0.06) !important; }
+:root.light .hover\:bg-white\/8:hover  { background-color: rgba(17, 24, 39, 0.08) !important; }
+:root.light .hover\:bg-white\/10:hover { background-color: rgba(17, 24, 39, 0.10) !important; }
+
+/* Borders applied via arbitrary value e.g. border-[rgba(255,255,255,0.05)] (used in DashboardLayout) */
+:root.light .border-\[rgba\(255\,255\,255\,0\.05\)\] { border-color: rgba(17, 24, 39, 0.07) !important; }

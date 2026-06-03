@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import { selectUserRole } from '../../store/slices/authSlice';
 import { useGetAdminDashboardQuery } from '../../store/api/endpoints';
 import { School, Users, DollarSign, TrendingUp, Server, Activity } from 'lucide-react';
@@ -123,7 +124,7 @@ export default function SuperAdminDashboard() {
       <div className="card overflow-hidden animate-fade-up animate-fade-up-delay-3">
         <div className="p-4 border-b border-white/5 flex items-center justify-between">
           <h2 className="font-display font-semibold text-text-primary">Recent Schools</h2>
-          <button className="text-xs text-accent hover:underline">View all →</button>
+          <Link to="/dashboard/schools" className="text-xs text-accent hover:underline">View all →</Link>
         </div>
         <table className="w-full">
           <thead>
@@ -170,7 +171,7 @@ export default function SuperAdminDashboard() {
                   </span>
                 </td>
                 <td>
-                  <button className="text-xs text-accent hover:underline">Manage</button>
+                  <Link to="/dashboard/schools" className="text-xs text-accent hover:underline">Manage</Link>
                 </td>
               </tr>
             ))}

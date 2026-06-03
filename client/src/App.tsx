@@ -7,6 +7,7 @@ import { useGetMeQuery } from './store/api/endpoints';
 import { setUser, setLoading, logout } from './store/slices/authSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectIsAuthenticated, selectUserRole } from './store/slices/authSlice';
+import { selectTheme } from './store/slices/uiSlice';
 import { RootState } from './store';
 import { useSocket } from './hooks/useSocket';
 import './styles/globals.css';
@@ -51,6 +52,18 @@ const PageLoader = () => (
     </div>
   </div>
 );
+
+// Applies the active theme as a class on <html> so both CSS variables and
+// Tailwind's `dark:` variant respond. Runs on every theme change.
+const ThemeApplier = () => {
+  const theme = useSelector(selectTheme);
+  useEffect(() => {
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    root.classList.add(theme);
+  }, [theme]);
+  return null;
+};
 
 // FIX: AuthInitializer now uses setUser (not setCredentials) because GET /auth/me
 // does NOT return accessToken. The token only comes from login/register/refresh responses.
@@ -142,12 +155,13 @@ export default function App() {
   return (
     <Provider store={store}>
       <BrowserRouter>
+        <ThemeApplier />
         <AppRoutes />
         <Toaster position="top-right" gutter={8} toastOptions={{
           duration: 4000,
-          style: { background: '#111827', color: '#F1F1EE', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: '12px', fontSize: '14px' },
-          success: { iconTheme: { primary: '#10B981', secondary: '#111827' } },
-          error: { iconTheme: { primary: '#EF4444', secondary: '#111827' } },
+          style: { background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '0.5px solid var(--border)', borderRadius: '12px', fontSize: '14px' },
+          success: { iconTheme: { primary: '#10B981', secondary: 'var(--bg-secondary)' } },
+          error: { iconTheme: { primary: '#EF4444', secondary: 'var(--bg-secondary)' } },
         }} />
       </BrowserRouter>
     </Provider>

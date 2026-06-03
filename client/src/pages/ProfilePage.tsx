@@ -29,8 +29,8 @@ export default function ProfilePage() {
   const [uploadAvatar, { isLoading: isUploadingAvatar }] = useUploadAvatarMutation();
   const avatarInputRef = React.useRef<HTMLInputElement>(null);
 
-  const profileForm = useForm<{ firstName: string; lastName: string }>({
-    defaultValues: { firstName: user?.firstName || '', lastName: user?.lastName || '' },
+  const profileForm = useForm<{ firstName: string; lastName: string; phone: string }>({
+    defaultValues: { firstName: user?.firstName || '', lastName: user?.lastName || '', phone: (user as any)?.phone || '' },
   });
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -163,7 +163,6 @@ export default function ProfilePage() {
                 <p className="text-xs text-text-tertiary">{row.label}</p>
                 <p className="text-sm text-text-primary font-medium mt-0.5">{row.value || '—'}</p>
               </div>
-              <button className="text-xs text-accent hover:underline">Edit</button>
             </div>
           ))}
         </div>
@@ -199,7 +198,7 @@ export default function ProfilePage() {
         </div>
       ) : (
         <div className="flex justify-end">
-          <button onClick={() => { setEditProfile(true); profileForm.reset({ firstName: user.firstName, lastName: user.lastName }); }} className="btn-secondary text-sm flex items-center gap-2">
+          <button onClick={() => { setEditProfile(true); profileForm.reset({ firstName: user.firstName, lastName: user.lastName, phone: (user as any).phone || '' }); }} className="btn-secondary text-sm flex items-center gap-2">
             <Edit2 size={14} /> Edit Profile
           </button>
         </div>

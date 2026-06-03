@@ -5,10 +5,11 @@ import {
   LayoutDashboard, Users, GraduationCap, BookOpen, ClipboardList,
   BarChart3, DollarSign, Bell, Settings, LogOut, Menu, X,
   ChevronLeft, ChevronRight, FileText, School, Search, User,
-  MessageCircle, BookMarked, Globe, TrendingUp
+  MessageCircle, BookMarked, Globe, TrendingUp, Sun, Moon
 } from 'lucide-react';
 import { selectCurrentUser, selectUserRole } from '../../store/slices/authSlice';
 import { logout } from '../../store/slices/authSlice';
+import { toggleTheme, selectTheme } from '../../store/slices/uiSlice';
 import { RootState } from '../../store';
 import { useLogoutMutation } from '../../store/api/endpoints';
 import NotificationPanel from '../dashboard/NotificationPanel';
@@ -202,11 +203,27 @@ export default function DashboardLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const theme = useSelector(selectTheme);
   const user = useSelector(selectCurrentUser);
   const unreadCount = useSelector((s: RootState) => s.notifications.unreadCount);
 
   // Close mobile on route change
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+
+  // Quick-search keyboard shortcut (⌘K / Ctrl+K)
+  const openSearch = () => navigate('/dashboard/students');
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        navigate('/dashboard/students');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [navigate]);
 
   return (
     <div className="flex h-screen bg-bg-primary overflow-hidden">
@@ -234,13 +251,23 @@ export default function DashboardLayout() {
           </button>
 
           {/* Search bar */}
-          <button className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-bg-tertiary border border-white/6 text-text-tertiary text-sm hover:border-accent/30 transition-all flex-1 max-w-sm">
+          <button onClick={openSearch} className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-bg-tertiary border border-border text-text-tertiary text-sm hover:border-accent/30 transition-all flex-1 max-w-sm">
             <Search size={13} />
             <span>Quick search...</span>
-            <kbd className="ml-auto text-xs bg-white/5 px-1.5 py-0.5 rounded border border-white/10 font-mono">⌘K</kbd>
+            <kbd className="ml-auto text-xs bg-white/5 px-1.5 py-0.5 rounded border border-border font-mono">⌘K</kbd>
           </button>
 
           <div className="ml-auto flex items-center gap-2">
+            {/* Theme toggle */}
+            <button
+              onClick={() => dispatch(toggleTheme())}
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label="Toggle theme"
+              className="p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all"
+            >
+              {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
+
             {/* Notification bell */}
             <button
               onClick={() => setNotifOpen(o => !o)}

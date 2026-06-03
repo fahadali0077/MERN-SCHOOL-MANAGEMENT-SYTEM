@@ -1,6 +1,6 @@
 import toast from 'react-hot-toast';
 import React, { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, User, ClipboardList, BarChart3, DollarSign,
   FileText, Phone, Mail, Calendar, MapPin, Edit2, Upload
@@ -49,6 +49,7 @@ const InfoRow = ({ label, value, icon: Icon }: { label: string; value?: string; 
 export default function StudentDetail() {
   useWindowTitle('Student Profile');
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [uploadingDoc, setUploadingDoc] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [uploadDocument] = useUploadStudentDocumentMutation();
@@ -146,7 +147,7 @@ export default function StudentDetail() {
             </div>
           </div>
 
-          <button className="btn-secondary text-sm flex items-center gap-2 flex-shrink-0">
+          <button onClick={() => navigate(`/dashboard/students/${id}/edit`)} className="btn-secondary text-sm flex items-center gap-2 flex-shrink-0">
             <Edit2 size={13}/>Edit
           </button>
         </div>

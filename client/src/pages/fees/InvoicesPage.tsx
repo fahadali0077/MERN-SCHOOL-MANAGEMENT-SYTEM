@@ -1,4 +1,5 @@
 import React from 'react';
+import toast from 'react-hot-toast';
 import { useSelector } from 'react-redux';
 import { selectCurrentUser } from '../../store/slices/authSlice';
 import { useGetStudentFeesQuery, useGetInvoicesQuery } from '../../store/api/endpoints';
@@ -129,7 +130,10 @@ export default function InvoicesPage() {
             )}
 
             {inv.status !== 'paid' && (
-              <button className="mt-4 w-full py-2.5 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition-all">
+              <button
+                onClick={() => toast('Online payment is not enabled yet. Please pay at the school office — the admin will record your payment.', { icon: 'ℹ️', duration: 5000 })}
+                className="mt-4 w-full py-2.5 rounded-lg bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition-all"
+              >
                 Pay Now — ${inv.balanceDue?.toLocaleString()}
               </button>
             )}

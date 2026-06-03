@@ -273,7 +273,7 @@ export function Tooltip({ content, children, position = 'top' }: TooltipProps) {
   return (
     <div className="relative group inline-flex">
       {children}
-      <div className={`absolute ${posClasses[position]} z-50 px-2 py-1 text-xs text-white bg-bg-tertiary border border-white/10 rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}>
+      <div className={`absolute ${posClasses[position]} z-50 px-2 py-1 text-xs text-text-primary bg-bg-tertiary border border-border rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none`}>
         {content}
       </div>
     </div>

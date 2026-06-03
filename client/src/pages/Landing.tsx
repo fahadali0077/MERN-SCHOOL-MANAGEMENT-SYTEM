@@ -325,9 +325,16 @@ export default function Landing() {
           </div>
           <p className="text-text-tertiary text-xs">© {new Date().getFullYear()} SchoolMS. Built with ❤️ for educators worldwide.</p>
           <div className="flex gap-6 text-xs text-text-tertiary">
-            <a href="#" className="hover:text-text-secondary transition-colors">Privacy</a>
-            <a href="#" className="hover:text-text-secondary transition-colors">Terms</a>
-            <a href="#" className="hover:text-text-secondary transition-colors">API Docs</a>
+            <a href="#features" className="hover:text-text-secondary transition-colors">Features</a>
+            <a href="#pricing" className="hover:text-text-secondary transition-colors">Pricing</a>
+            <a
+              href={`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/docs`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-text-secondary transition-colors"
+            >
+              API Docs
+            </a>
           </div>
         </div>
       </footer>

@@ -4,27 +4,31 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      // NOTE: colors now reference CSS variables (defined in globals.css for both
+      // dark + light themes) instead of hardcoded hex. This is what makes the
+      // light/dark theme switch actually repaint Tailwind utility classes like
+      // `bg-bg-primary`, `text-text-primary`, `border-border`, etc.
       colors: {
         bg: {
-          primary: '#0D0D1A',
-          secondary: '#111827',
-          tertiary: '#1A1A2E',
-          card: '#111111',
+          primary: 'var(--bg-primary)',
+          secondary: 'var(--bg-secondary)',
+          tertiary: 'var(--bg-tertiary)',
+          card: 'var(--bg-secondary)',
         },
         text: {
-          primary: '#F1F1EE',
-          secondary: '#888888',
-          tertiary: '#555555',
+          primary: 'var(--text-primary)',
+          secondary: 'var(--text-secondary)',
+          tertiary: 'var(--text-tertiary)',
         },
         accent: {
-          DEFAULT: '#0066FF',
-          hover: '#0052CC',
-          glow: 'rgba(0,102,255,0.35)',
+          DEFAULT: 'var(--accent)',
+          hover: 'var(--accent-hover)',
+          glow: 'var(--accent-glow)',
         },
-        success: '#10B981',
-        warning: '#F59E0B',
-        danger: '#EF4444',
-        border: 'rgba(255,255,255,0.08)',
+        success: 'var(--success)',
+        warning: 'var(--warning)',
+        danger: 'var(--danger)',
+        border: 'var(--border)',
       },
       fontFamily: {
         display: ['Clash Display', 'sans-serif'],
@@ -36,14 +40,14 @@ export default {
         btn: '8px',
       },
       boxShadow: {
-        glow: '0 0 30px rgba(0,102,255,0.35)',
-        'glow-sm': '0 0 15px rgba(0,102,255,0.2)',
-        card: '0 4px 24px rgba(0,0,0,0.4)',
-        'card-hover': '0 8px 40px rgba(0,0,0,0.6)',
+        glow: '0 0 30px var(--accent-glow)',
+        'glow-sm': '0 0 15px var(--accent-glow)',
+        card: 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
       },
       backgroundImage: {
         'gradient-hero': 'linear-gradient(135deg, #667eea, #0066FF)',
-        'gradient-card': 'linear-gradient(135deg, #111827, #1A1A2E)',
+        'gradient-card': 'linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary))',
         'gradient-accent': 'linear-gradient(135deg, #0066FF, #667eea)',
       },
       animation: {
@@ -60,17 +64,14 @@ export default {
           from: { opacity: 0, transform: 'translateY(30px)' },
           to: { opacity: 1, transform: 'translateY(0)' }
         },
-        fadeIn: {
-          from: { opacity: 0 },
-          to: { opacity: 1 }
-        },
+        fadeIn: { from: { opacity: 0 }, to: { opacity: 1 } },
         slideIn: {
           from: { opacity: 0, transform: 'translateX(-20px)' },
           to: { opacity: 1, transform: 'translateX(0)' }
         },
         pulseGlow: {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(0,102,255,0.3)' },
-          '50%': { boxShadow: '0 0 40px rgba(0,102,255,0.6)' }
+          '0%, 100%': { boxShadow: '0 0 20px var(--accent-glow)' },
+          '50%': { boxShadow: '0 0 40px var(--accent-glow)' }
         },
         marquee: {
           from: { transform: 'translateX(0)' },

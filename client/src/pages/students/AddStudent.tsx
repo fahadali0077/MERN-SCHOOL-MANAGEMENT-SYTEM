@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useCreateStudentMutation } from '../../store/api/endpoints';
+import { useCreateStudentMutation, useUpdateStudentMutation, useGetStudentQuery } from '../../store/api/endpoints';
 import { useGetClassesQuery } from '../../store/api/endpoints';
 import { ArrowLeft, Loader2, UserPlus, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -48,17 +48,49 @@ type FormData = z.infer<typeof schema>;
 const steps = ['Personal Info', 'Academic', 'Guardian', 'Address'];
 
 export default function AddStudent() {
-  useWindowTitle('Add Student');
+  const { id } = useParams<{ id: string }>();
+  const isEdit = Boolean(id);
+  useWindowTitle(isEdit ? 'Edit Student' : 'Add Student');
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
-  const [createStudent, { isLoading }] = useCreateStudentMutation();
+  const [createStudent, { isLoading: isCreating }] = useCreateStudentMutation();
+  const [updateStudent, { isLoading: isUpdating }] = useUpdateStudentMutation();
+  const { data: studentData } = useGetStudentQuery(id as string, { skip: !isEdit });
   const { data: classesData } = useGetClassesQuery();
   const classes = classesData?.data || [];
+  const isLoading = isCreating || isUpdating;
 
-  const { register, handleSubmit, formState: { errors }, trigger, getValues } = useForm<FormData>({
+  const { register, handleSubmit, formState: { errors }, trigger, getValues, reset } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { admissionDate: new Date().toISOString().split('T')[0], feeCategory: 'regular' }
   });
+
+  // Prefill the form when editing an existing student.
+  useEffect(() => {
+    const s = studentData?.data;
+    if (!isEdit || !s) return;
+    const u = s.userId || {};
+    const toDateInput = (d?: string) => (d ? new Date(d).toISOString().split('T')[0] : '');
+    reset({
+      firstName: u.firstName || '',
+      lastName: u.lastName || '',
+      email: u.email || '',
+      phone: u.phone || '',
+      classId: typeof s.classId === 'object' ? s.classId?._id : s.classId || '',
+      rollNumber: s.rollNumber || '',
+      gender: s.gender || 'male',
+      dateOfBirth: toDateInput(s.dateOfBirth),
+      admissionDate: toDateInput(s.admissionDate) || new Date().toISOString().split('T')[0],
+      bloodGroup: s.bloodGroup || '',
+      feeCategory: s.feeCategory || 'regular',
+      guardianName: s.guardian?.name || '',
+      guardianPhone: s.guardian?.phone || '',
+      guardianRelation: s.guardian?.relation || '',
+      currentStreet: s.address?.current?.street || '',
+      currentCity: s.address?.current?.city || '',
+      currentState: s.address?.current?.state || '',
+    });
+  }, [studentData, isEdit, reset]);
 
   const nextStep = async () => {
     const fields: Record<number, (keyof FormData)[]> = {
@@ -98,11 +130,17 @@ export default function AddStudent() {
           }
         }
       };
+      if (isEdit && id) {
+        await updateStudent({ id, data: payload }).unwrap();
+        toast.success('Student updated successfully');
+        navigate(`/dashboard/students/${id}`);
+        return;
+      }
       await createStudent(payload).unwrap();
       toast.success('Student added successfully! Welcome email sent.');
       navigate('/dashboard/students');
     } catch (err: any) {
-      toast.error(err?.data?.message || 'Failed to add student');
+      toast.error(err?.data?.message || `Failed to ${isEdit ? 'update' : 'add'} student`);
     }
   };
 
@@ -128,8 +166,8 @@ export default function AddStudent() {
           <ArrowLeft size={18} />
         </Link>
         <div>
-          <h1 className="text-2xl font-display font-bold text-text-primary">Add Student</h1>
-          <p className="text-text-secondary text-sm">Fill in the details to enroll a new student</p>
+          <h1 className="text-2xl font-display font-bold text-text-primary">{isEdit ? 'Edit Student' : 'Add Student'}</h1>
+          <p className="text-text-secondary text-sm">{isEdit ? 'Update the student\u2019s details' : 'Fill in the details to enroll a new student'}</p>
         </div>
       </div>
 
@@ -258,7 +296,7 @@ export default function AddStudent() {
           ) : (
             <button type="submit" disabled={isLoading} className="btn-primary">
               {isLoading ? <Loader2 size={15} className="animate-spin" /> : <UserPlus size={15} />}
-              {isLoading ? 'Creating...' : 'Add Student'}
+              {isLoading ? (isEdit ? 'Saving...' : 'Creating...') : (isEdit ? 'Save Changes' : 'Add Student')}
             </button>
           )}
         </div>

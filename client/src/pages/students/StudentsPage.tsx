@@ -19,10 +19,14 @@ export default function StudentsPage() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [filterOpen, setFilterOpen] = useState(false);
   const [deleteStudent] = useDeleteStudentMutation();
   const [confirmDelete, setConfirmDelete] = useState<{ id: string; name: string } | null>(null);
 
-  const { data, isLoading, isError } = useGetStudentsQuery({ page, limit: 25, search: debouncedSearch });
+  const queryArgs: any = { page, limit: 25, search: debouncedSearch };
+  if (statusFilter) queryArgs['filter[status]'] = statusFilter;
+  const { data, isLoading, isError } = useGetStudentsQuery(queryArgs);
   const students = data?.data || [];
   const pagination = data?.pagination;
 
@@ -140,9 +144,38 @@ export default function StudentsPage() {
             className="input pl-9 text-sm"
           />
         </div>
-        <button className="btn-secondary text-sm flex items-center gap-2 flex-shrink-0">
-          <Filter size={14} /> Filter
-        </button>
+        <div className="relative flex-shrink-0">
+          <button
+            onClick={() => setFilterOpen(o => !o)}
+            className={`btn-secondary text-sm flex items-center gap-2 ${statusFilter ? 'border-accent text-accent' : ''}`}
+          >
+            <Filter size={14} /> {statusFilter ? statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1) : 'Filter'}
+          </button>
+          {filterOpen && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setFilterOpen(false)} />
+              <div className="absolute right-0 mt-2 w-44 z-20 card p-1.5 shadow-card-hover">
+                {[
+                  { value: '', label: 'All Students' },
+                  { value: 'active', label: 'Active' },
+                  { value: 'inactive', label: 'Inactive' },
+                  { value: 'transferred', label: 'Transferred' },
+                  { value: 'graduated', label: 'Graduated' },
+                ].map(opt => (
+                  <button
+                    key={opt.value || 'all'}
+                    onClick={() => { setStatusFilter(opt.value); setPage(1); setFilterOpen(false); }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                      statusFilter === opt.value ? 'bg-accent/10 text-accent' : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Table */}
