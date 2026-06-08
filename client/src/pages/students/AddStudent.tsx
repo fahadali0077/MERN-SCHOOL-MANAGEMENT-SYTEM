@@ -47,6 +47,25 @@ type FormData = z.infer<typeof schema>;
 
 const steps = ['Personal Info', 'Academic', 'Guardian', 'Address'];
 
+// FIX: Field is defined at module scope (not inside the component). Previously it was
+// declared inside AddStudent's render, so it was a new component type on every keystroke,
+// remounting the input and dropping focus after each character.
+function Field({ label, name, type = 'text', placeholder, required = false, children, register, errors }: any) {
+  return (
+    <div>
+      <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+        {label}{required && <span className="text-danger ml-1">*</span>}
+      </label>
+      {children || (
+        <input {...register(name)} type={type} placeholder={placeholder} className="input mt-1.5" />
+      )}
+      {errors[name as keyof typeof errors] && (
+        <p className="text-danger text-xs mt-1">{(errors[name as keyof typeof errors] as any)?.message}</p>
+      )}
+    </div>
+  );
+}
+
 export default function AddStudent() {
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
@@ -144,20 +163,6 @@ export default function AddStudent() {
     }
   };
 
-  const Field = ({ label, name, type = 'text', placeholder, required = false, children }: any) => (
-    <div>
-      <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-        {label}{required && <span className="text-danger ml-1">*</span>}
-      </label>
-      {children || (
-        <input {...register(name)} type={type} placeholder={placeholder} className="input mt-1.5" />
-      )}
-      {errors[name as keyof typeof errors] && (
-        <p className="text-danger text-xs mt-1">{(errors[name as keyof typeof errors] as any)?.message}</p>
-      )}
-    </div>
-  );
-
   return (
     <div className="p-6 max-w-2xl mx-auto space-y-6">
       {/* Header */}
@@ -196,13 +201,13 @@ export default function AddStudent() {
             <>
               <h2 className="font-display font-semibold text-lg text-text-primary">Personal Information</h2>
               <div className="grid grid-cols-2 gap-4">
-                <Field label="First Name" name="firstName" placeholder="John" required />
-                <Field label="Last Name" name="lastName" placeholder="Doe" required />
+                <Field register={register} errors={errors} label="First Name" name="firstName" placeholder="John" required />
+                <Field register={register} errors={errors} label="Last Name" name="lastName" placeholder="Doe" required />
               </div>
-              <Field label="Email Address" name="email" type="email" placeholder="student@school.edu" required />
-              <Field label="Phone" name="phone" placeholder="+1 234 567 890" />
+              <Field register={register} errors={errors} label="Email Address" name="email" type="email" placeholder="student@school.edu" required />
+              <Field register={register} errors={errors} label="Phone" name="phone" placeholder="+1 234 567 890" />
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Gender" name="gender" required>
+                <Field register={register} errors={errors} label="Gender" name="gender" required>
                   <select {...register('gender')} className="input mt-1.5">
                     <option value="">Select gender</option>
                     <option value="male">Male</option>
@@ -210,9 +215,9 @@ export default function AddStudent() {
                     <option value="other">Other</option>
                   </select>
                 </Field>
-                <Field label="Date of Birth" name="dateOfBirth" type="date" />
+                <Field register={register} errors={errors} label="Date of Birth" name="dateOfBirth" type="date" />
               </div>
-              <Field label="Blood Group" name="bloodGroup">
+              <Field register={register} errors={errors} label="Blood Group" name="bloodGroup">
                 <select {...register('bloodGroup')} className="input mt-1.5">
                   <option value="">Select blood group</option>
                   {['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(g => <option key={g} value={g}>{g}</option>)}
@@ -225,7 +230,7 @@ export default function AddStudent() {
           {step === 1 && (
             <>
               <h2 className="font-display font-semibold text-lg text-text-primary">Academic Details</h2>
-              <Field label="Class" name="classId" required>
+              <Field register={register} errors={errors} label="Class" name="classId" required>
                 <select {...register('classId')} className="input mt-1.5">
                   <option value="">Select class</option>
                   {classes.map((cls: any) => (
@@ -236,10 +241,10 @@ export default function AddStudent() {
                 </select>
               </Field>
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Roll Number" name="rollNumber" placeholder="e.g. 001" required />
-                <Field label="Admission Date" name="admissionDate" type="date" required />
+                <Field register={register} errors={errors} label="Roll Number" name="rollNumber" placeholder="e.g. 001" required />
+                <Field register={register} errors={errors} label="Admission Date" name="admissionDate" type="date" required />
               </div>
-              <Field label="Fee Category" name="feeCategory">
+              <Field register={register} errors={errors} label="Fee Category" name="feeCategory">
                 <select {...register('feeCategory')} className="input mt-1.5">
                   <option value="regular">Regular</option>
                   <option value="scholarship">Scholarship</option>
@@ -254,9 +259,9 @@ export default function AddStudent() {
           {step === 2 && (
             <>
               <h2 className="font-display font-semibold text-lg text-text-primary">Guardian Information</h2>
-              <Field label="Guardian Name" name="guardianName" placeholder="Parent/Guardian full name" />
+              <Field register={register} errors={errors} label="Guardian Name" name="guardianName" placeholder="Parent/Guardian full name" />
               <div className="grid grid-cols-2 gap-4">
-                <Field label="Relation" name="guardianRelation">
+                <Field register={register} errors={errors} label="Relation" name="guardianRelation">
                   <select {...register('guardianRelation')} className="input mt-1.5">
                     <option value="">Select</option>
                     <option value="father">Father</option>
@@ -265,7 +270,7 @@ export default function AddStudent() {
                     <option value="other">Other</option>
                   </select>
                 </Field>
-                <Field label="Guardian Phone" name="guardianPhone" placeholder="+1 234 567 890" />
+                <Field register={register} errors={errors} label="Guardian Phone" name="guardianPhone" placeholder="+1 234 567 890" />
               </div>
             </>
           )}
@@ -274,10 +279,10 @@ export default function AddStudent() {
           {step === 3 && (
             <>
               <h2 className="font-display font-semibold text-lg text-text-primary">Address</h2>
-              <Field label="Street Address" name="currentStreet" placeholder="123 Main St" />
+              <Field register={register} errors={errors} label="Street Address" name="currentStreet" placeholder="123 Main St" />
               <div className="grid grid-cols-2 gap-4">
-                <Field label="City" name="currentCity" placeholder="City" />
-                <Field label="State" name="currentState" placeholder="State" />
+                <Field register={register} errors={errors} label="City" name="currentCity" placeholder="City" />
+                <Field register={register} errors={errors} label="State" name="currentState" placeholder="State" />
               </div>
             </>
           )}

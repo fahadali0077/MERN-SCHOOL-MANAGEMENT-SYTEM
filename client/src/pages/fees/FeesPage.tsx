@@ -37,7 +37,15 @@ function StructureCard({ structure }: { structure: any }) {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-sm font-display font-bold text-text-primary">
-            ${structure.components?.reduce((a: number, c: any) => a + c.amount, 0).toLocaleString()}/mo
+            ${structure.components?.reduce((a: number, c: any) => a + c.amount, 0).toLocaleString()}
+            {(() => {
+              // FIX: was hardcoded "/mo". Derive a suffix from the components' frequencies.
+              const freqs = [...new Set((structure.components || []).map((c: any) => c.frequency))];
+              const suffix: Record<string, string> = {
+                monthly: '/mo', quarterly: '/qtr', annually: '/yr', yearly: '/yr', 'one-time': '', oneTime: '',
+              };
+              return freqs.length === 1 ? (suffix[freqs[0] as string] ?? `/${freqs[0]}`) : '/period';
+            })()}
           </span>
           {expanded ? <ChevronDown size={15} className="text-text-tertiary" /> : <ChevronRight size={15} className="text-text-tertiary" />}
         </div>
@@ -101,8 +109,15 @@ function CreateStructureModal({ onClose }: { onClose: () => void }) {
             <div>
               <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Category</label>
               <select {...register('category')} className="input mt-1.5">
-                {['regular','scholarship','staff','sibling','other'].map(c => (
-                  <option key={c} value={c}>{c.charAt(0).toUpperCase()+c.slice(1)}</option>
+                {/* FIX: must match the fee categories offered in AddStudent so a student's
+                    feeCategory can actually match a structure for auto-invoicing */}
+                {[
+                  { v: 'regular', l: 'Regular' },
+                  { v: 'scholarship', l: 'Scholarship' },
+                  { v: 'staff_ward', l: 'Staff Ward' },
+                  { v: 'ews', l: 'EWS' },
+                ].map(c => (
+                  <option key={c.v} value={c.v}>{c.l}</option>
                 ))}
               </select>
             </div>

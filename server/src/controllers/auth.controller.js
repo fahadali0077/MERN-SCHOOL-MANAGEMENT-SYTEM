@@ -87,13 +87,21 @@ const authController = {
   async changePassword(req, res, next) {
     try {
       const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return next(new AppError('Current and new passwords are required', 400));
+      }
+      if (newPassword.length < 8) {
+        return next(new AppError('New password must be at least 8 characters', 400));
+      }
       const User = require('../models/User.model');
-      const user = await User.findById(req.user._id).select('+password');
+      const user = await User.findById(req.user._id).select('+password +refreshTokens');
 
       const isMatch = await user.comparePassword(currentPassword);
       if (!isMatch) return next(new AppError('Current password is incorrect', 400));
 
       user.password = newPassword;
+      // FIX: revoke ALL existing refresh tokens so a stolen/old token can't be reused
+      user.refreshTokens = [];
       await user.save();
 
       const { cache } = require('../config/redis');

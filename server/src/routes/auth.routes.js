@@ -2,13 +2,16 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/auth.controller');
 const { authenticate } = require('../middlewares/auth.middleware');
+const {
+  registerValidator, loginValidator, forgotPasswordValidator, resetPasswordValidator
+} = require('../validators');
 
-router.post('/register', authController.register);
-router.post('/login', authController.login);
+router.post('/register', registerValidator, authController.register);
+router.post('/login', loginValidator, authController.login);
 router.post('/refresh', authController.refresh);
 router.get('/verify-email', authController.verifyEmail);
-router.post('/forgot-password', authController.forgotPassword);
-router.post('/reset-password', authController.resetPassword);
+router.post('/forgot-password', forgotPasswordValidator, authController.forgotPassword);
+router.post('/reset-password', resetPasswordValidator, authController.resetPassword);
 
 // Protected routes
 router.use(authenticate);

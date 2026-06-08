@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useGetStudentsQuery, useDeleteStudentMutation } from '../../store/api/endpoints';
 import { Plus, Search, Filter, Eye, Edit, Trash2, Users, Download } from 'lucide-react';
@@ -30,6 +30,23 @@ export default function StudentsPage() {
   const students = data?.data || [];
   const pagination = data?.pagination;
 
+  // FIX: per-component debounce timer via useRef (was a global window._searchTimer
+  // that could collide with other debounced inputs on the page).
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (searchTimer.current) clearTimeout(searchTimer.current); }, []);
+
+  const handleSearch = (val: string) => {
+    setSearch(val);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      setDebouncedSearch(val);
+      setPage(1);
+    }, 400);
+  };
+
+  // Scroll to top when the page changes (pagination UX)
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [page]);
+
   if (isError) {
     return (
       <div className="p-6 flex items-center justify-center min-h-64">
@@ -40,15 +57,6 @@ export default function StudentsPage() {
       </div>
     );
   }
-
-  const handleSearch = (val: string) => {
-    setSearch(val);
-    clearTimeout((window as any)._searchTimer);
-    (window as any)._searchTimer = setTimeout(() => {
-      setDebouncedSearch(val);
-      setPage(1);
-    }, 400);
-  };
 
   const handleDelete = (id: string, name: string) => {
     setConfirmDelete({ id, name });

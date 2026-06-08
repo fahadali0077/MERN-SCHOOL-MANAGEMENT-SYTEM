@@ -21,7 +21,8 @@ const fileFilter = (req, file, cb) => {
     document: [
       'application/pdf',
       'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg', 'image/png', 'image/webp'
     ],
     any: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'application/msword']
   };

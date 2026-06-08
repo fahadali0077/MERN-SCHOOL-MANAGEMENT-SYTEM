@@ -9,31 +9,69 @@ const emailService = require('../services/email.service');
 const studentController = {
   async getAll(req, res, next) {
     try {
+      const mongoose = require('mongoose');
       const { skip, limit, sort, page, search, filterQuery } = buildQuery(req.query);
       const schoolId = req.user.schoolId || req.params.schoolId;
 
       const filter = { schoolId, ...filterQuery };
-      if (search) {
-        filter.$or = [
-          { rollNumber: { $regex: search, $options: 'i' } },
-          { admissionNumber: { $regex: search, $options: 'i' } }
-        ];
-      }
 
-      const cacheKey = `students:${schoolId}:${page}:${limit}:${search || ''}`;
+      // FIX: cache key now includes the status/other filters and search — previously two
+      // different filters shared a key and served each other's cached results.
+      const cacheKey = `students:${schoolId}:${page}:${limit}:${search || ''}:${JSON.stringify(filterQuery)}`;
       const cached = await cache.get(cacheKey);
       if (cached) return successResponse(res, cached.data, 'Students fetched', 200, cached.pagination);
 
-      const [students, total] = await Promise.all([
-        Student.find(filter)
-          .populate('userId', 'firstName lastName email avatar phone')
-          .populate('classId', 'name section grade')
-          .sort(sort)
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        Student.countDocuments(filter)
-      ]);
+      let students, total;
+
+      if (search) {
+        // FIX: search now matches student NAME (on the related User) as well as
+        // rollNumber/admissionNumber — previously name searches returned nothing.
+        const sid = schoolId ? new mongoose.Types.ObjectId(schoolId) : schoolId;
+        const rx = { $regex: search, $options: 'i' };
+        const basePipeline = [
+          { $match: { schoolId: sid, ...filterQuery } },
+          { $lookup: { from: 'users', localField: 'userId', foreignField: '_id', as: 'user' } },
+          { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+          { $match: { $or: [
+            { rollNumber: rx },
+            { admissionNumber: rx },
+            { 'user.firstName': rx },
+            { 'user.lastName': rx },
+            { 'user.email': rx },
+          ] } },
+        ];
+
+        const [rows, countArr] = await Promise.all([
+          Student.aggregate([
+            ...basePipeline,
+            { $lookup: { from: 'classes', localField: 'classId', foreignField: '_id', as: 'classId' } },
+            { $unwind: { path: '$classId', preserveNullAndEmptyArrays: true } },
+            { $project: {
+              rollNumber: 1, admissionNumber: 1, admissionDate: 1, status: 1, feeCategory: 1,
+              gender: 1, schoolId: 1,
+              userId: { _id: '$user._id', firstName: '$user.firstName', lastName: '$user.lastName', email: '$user.email', avatar: '$user.avatar', phone: '$user.phone' },
+              classId: { _id: '$classId._id', name: '$classId.name', section: '$classId.section', grade: '$classId.grade' },
+            } },
+            { $sort: sort },
+            { $skip: skip },
+            { $limit: limit },
+          ]),
+          Student.aggregate([...basePipeline, { $count: 'total' }]),
+        ]);
+        students = rows;
+        total = countArr[0]?.total || 0;
+      } else {
+        [students, total] = await Promise.all([
+          Student.find(filter)
+            .populate('userId', 'firstName lastName email avatar phone')
+            .populate('classId', 'name section grade')
+            .sort(sort)
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+          Student.countDocuments(filter)
+        ]);
+      }
 
       const pagination = paginationHelper(page, limit, total);
       await cache.set(cacheKey, { data: students, pagination }, 300);
@@ -55,6 +93,8 @@ const studentController = {
   },
 
   async create(req, res, next) {
+    const mongoose = require('mongoose');
+    const session = await mongoose.startSession();
     try {
       const { firstName, lastName, email, phone, classId, rollNumber, admissionDate, ...studentData } = req.body;
       const schoolId = req.user.schoolId;
@@ -68,41 +108,46 @@ const studentController = {
       const year = new Date().getFullYear().toString().slice(-2);
       const admissionNumber = `ADM${year}${String(count + 1).padStart(5, '0')}`;
 
-      // Create user account
       const tempPassword = crypto.randomBytes(8).toString('hex');
-      const user = await User.create({
-        firstName, lastName, email, phone,
-        password: tempPassword,
-        role: 'student',
-        schoolId
+
+      let user, student;
+      // FIX: create the User and Student atomically. Previously if Student.create failed
+      // (e.g. duplicate admissionNumber/validation) the User was orphaned with no rollback.
+      await session.withTransaction(async () => {
+        const existingEmail = await User.findOne({ email }).session(session);
+        if (existingEmail) throw new AppError('Email already registered', 409);
+
+        [user] = await User.create([{
+          firstName, lastName, email, phone,
+          password: tempPassword,
+          role: 'student',
+          schoolId
+        }], { session });
+
+        [student] = await Student.create([{
+          userId: user._id, schoolId, classId, rollNumber,
+          admissionNumber, admissionDate: admissionDate || new Date(),
+          ...studentData
+        }], { session });
       });
 
-      const student = await Student.create({
-        userId: user._id, schoolId, classId, rollNumber,
-        admissionNumber, admissionDate: admissionDate || new Date(),
-        ...studentData
-      });
-
-      // Send welcome email with temp password
+      // Send welcome email with temp password (non-fatal)
       try {
         await emailService.sendWelcomeEmail(user, tempPassword);
       } catch (e) {}
 
       // ─── Auto-generate fee invoice for admission month ────────────────────
-      // If a fee structure exists matching the student's class + feeCategory,
-      // automatically create their first invoice so admins don't have to do it manually.
       try {
         const { FeeStructure, FeeInvoice } = require('../models/Fee.model');
         const feeCategory = studentData.feeCategory || 'regular';
         const now = new Date();
 
-        // Find a matching fee structure (by class or school-wide)
         const structure = await FeeStructure.findOne({
           schoolId,
           isActive: true,
           $or: [{ classId: classId }, { classId: null }, { classId: { $exists: false } }],
           category: feeCategory,
-        }).sort({ classId: -1 }); // prefer class-specific over generic
+        }).sort({ classId: -1 });
 
         if (structure) {
           const invoiceCount = await FeeInvoice.countDocuments({ schoolId });
@@ -131,20 +176,24 @@ const studentController = {
           });
         }
       } catch (feeErr) {
-        // Non-fatal: log but don't block student creation response
         const logger = require('../utils/logger');
         logger.warn(`Auto-fee-generation failed for student ${student._id}: ${feeErr.message}`);
       }
       // ─────────────────────────────────────────────────────────────────────
 
       await cache.delPattern(`students:${schoolId}:*`);
+      await cache.del(`student-stats:${schoolId}`); // FIX: stats cache was never invalidated
 
       const populated = await Student.findById(student._id)
         .populate('userId', 'firstName lastName email avatar')
         .populate('classId', 'name section grade');
 
       return successResponse(res, populated, 'Student created successfully', 201);
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    } finally {
+      session.endSession();
+    }
   },
 
   async update(req, res, next) {
@@ -167,6 +216,7 @@ const studentController = {
       await student.save();
 
       await cache.delPattern(`students:${schoolId}:*`);
+      await cache.del(`student-stats:${schoolId}`);
 
       return successResponse(res, student, 'Student updated');
     } catch (err) { next(err); }
@@ -184,6 +234,7 @@ const studentController = {
       await User.findByIdAndUpdate(student.userId, { isActive: false });
 
       await cache.delPattern(`students:${schoolId}:*`);
+      await cache.del(`student-stats:${schoolId}`);
       return successResponse(res, null, 'Student deactivated');
     } catch (err) { next(err); }
   },
@@ -191,26 +242,36 @@ const studentController = {
   async uploadDocument(req, res, next) {
     try {
       if (!req.file) return next(new AppError('No file uploaded', 400));
-      
+      if (!req.file.location) return next(new AppError('File upload failed — storage not available', 500));
+
       const student = await Student.findOne({ _id: req.params.id, schoolId: req.user.schoolId });
       if (!student) return next(new AppError('Student not found', 404));
 
+      // type must be one of the schema enum values; anything else falls back to 'other'
+      const allowedTypes = ['birthCertificate', 'tc', 'photo', 'aadhaar', 'marksheet', 'other'];
+      const reqType = req.body.type;
+      const type = allowedTypes.includes(reqType) ? reqType : 'other';
+
       const doc = {
         name: req.body.name || req.file.originalname,
-        type: req.body.type || 'other',
-        url: req.file.location || `/uploads/${req.file.filename}`
+        type,
+        url: req.file.location,
       };
 
       student.documents.push(doc);
       await student.save();
 
+      await cache.delPattern(`students:${req.user.schoolId}:*`);
       return successResponse(res, doc, 'Document uploaded', 201);
     } catch (err) { next(err); }
   },
 
   async getStats(req, res, next) {
     try {
+      const mongoose = require('mongoose');
       const schoolId = req.user.schoolId;
+      if (!schoolId) return successResponse(res, { total: 0, active: 0, inactive: 0, byGender: [], byClass: [] }, 'Stats fetched');
+      const sid = new mongoose.Types.ObjectId(schoolId);
       const cacheKey = `student-stats:${schoolId}`;
       const cached = await cache.get(cacheKey);
       if (cached) return successResponse(res, cached, 'Stats fetched');
@@ -219,11 +280,11 @@ const studentController = {
         Student.countDocuments({ schoolId }),
         Student.countDocuments({ schoolId, status: 'active' }),
         Student.aggregate([
-          { $match: { schoolId: require('mongoose').Types.ObjectId.createFromHexString ? schoolId : schoolId } },
+          { $match: { schoolId: sid } },
           { $group: { _id: '$gender', count: { $sum: 1 } } }
         ]),
         Student.aggregate([
-          { $match: { schoolId } },
+          { $match: { schoolId: sid } },
           { $lookup: { from: 'classes', localField: 'classId', foreignField: '_id', as: 'class' } },
           { $group: { _id: '$classId', className: { $first: { $arrayElemAt: ['$class.name', 0] } }, count: { $sum: 1 } } },
           { $sort: { count: -1 } },

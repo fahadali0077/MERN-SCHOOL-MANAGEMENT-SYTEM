@@ -33,13 +33,16 @@ const setCookies = (res, accessToken, refreshToken) => {
     secure: isProd,
     sameSite: isProd ? 'none' : 'lax',  // 'none' required for cross-origin (Vercel→Render)
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    path: '/api/v1/auth/refresh'
+    // FIX: was '/api/v1/auth/refresh' — that path meant the browser never sent the
+    // refresh cookie to /auth/logout, so logout could not revoke it. Widen to /api/v1/auth.
+    path: '/api/v1/auth'
   });
 };
 
 const clearCookies = (res) => {
   res.clearCookie('accessToken');
-  res.clearCookie('refreshToken', { path: '/api/v1/auth/refresh' });
+  // FIX: path MUST match the path the cookie was set with, otherwise it isn't cleared.
+  res.clearCookie('refreshToken', { path: '/api/v1/auth' });
 };
 
 const authService = {
@@ -94,7 +97,14 @@ const authService = {
     }
 
     const { accessToken, refreshToken } = generateTokens(user._id, user.role, user.schoolId);
-    
+
+    // FIX: MongoDB TTL indexes only work on top-level Date fields, not array sub-docs,
+    // so refreshTokens never auto-expire. Prune anything older than 7 days here.
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    user.refreshTokens = (user.refreshTokens || []).filter(
+      rt => rt.createdAt && new Date(rt.createdAt).getTime() > cutoff
+    );
+
     // Store new refresh token (keep max 5)
     user.refreshTokens.push({ token: refreshToken });
     if (user.refreshTokens.length > 5) user.refreshTokens.shift();

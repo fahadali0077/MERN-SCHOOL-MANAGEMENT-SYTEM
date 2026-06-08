@@ -21,18 +21,37 @@ export default function ExamsPage() {
   const [showCreate, setShowCreate] = useState(false);
   const { data, isLoading, isError } = useGetExamsQuery({});
   const { data: classesData } = useGetClassesQuery();
+  const { data: subjectsData } = useGetSubjectsQuery();
   const [createExam, { isLoading: isCreating }] = useCreateExamMutation();
   const [publishResults] = usePublishResultsMutation();
   const exams = data?.data || [];
   const classes = classesData?.data || [];
+  const subjects = subjectsData?.data || [];
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const currentYear = new Date().getFullYear();
+  const defaultAcademicYear = `${currentYear}-${String((currentYear + 1)).slice(-2)}`;
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<any>({
+    defaultValues: { academicYear: defaultAcademicYear, maxMarks: 100, passingMarks: 35, type: 'unitTest' },
+  });
 
   const onSubmit = async (data: any) => {
     try {
-      await createExam(data).unwrap();
+      // FIX: send selected subjects (multi-select) so MarksEntry can populate its
+      // subject dropdown — exams created without subjects made marks-entry impossible.
+      const subjectIds = Array.isArray(data.subjects)
+        ? data.subjects
+        : data.subjects ? [data.subjects] : [];
+      const payload = {
+        ...data,
+        subjects: subjectIds,
+        maxMarks: Number(data.maxMarks) || 100,
+        passingMarks: Number(data.passingMarks) || 35,
+        academicYear: data.academicYear || defaultAcademicYear,
+      };
+      await createExam(payload).unwrap();
       toast.success('Exam created successfully');
-      reset();
+      reset({ academicYear: defaultAcademicYear, maxMarks: 100, passingMarks: 35, type: 'unitTest' });
       setShowCreate(false);
     } catch (err: any) {
       toast.error(err?.data?.message || 'Failed to create exam');
@@ -174,8 +193,19 @@ export default function ExamsPage() {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Academic Year</label>
-                <input {...register('academicYear')} placeholder="2024-25" className="input mt-1.5" />
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Subjects *</label>
+                <select multiple {...register('subjects', { required: true })} className="input mt-1.5 h-32">
+                  {subjects.length === 0
+                    ? <option disabled>No subjects — create subjects first</option>
+                    : subjects.map((s: any) => <option key={s._id} value={s._id}>{s.name} {s.code ? `(${s.code})` : ''}</option>)}
+                </select>
+                <p className="text-[10px] text-text-tertiary mt-1">Hold Ctrl/Cmd to select multiple. Marks are entered per subject.</p>
+                {errors.subjects && <p className="text-danger text-xs mt-1">Select at least one subject</p>}
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Academic Year *</label>
+                <input {...register('academicYear', { required: true })} placeholder="2024-25" className="input mt-1.5" />
+                {errors.academicYear && <p className="text-danger text-xs mt-1">Academic year is required</p>}
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary flex-1">Cancel</button>

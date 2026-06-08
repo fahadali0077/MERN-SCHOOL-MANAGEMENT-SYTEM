@@ -37,9 +37,29 @@ const superAdminRoutes   = require('./routes/superadmin.routes');
 const app = express();
 const server = http.createServer(app);
 
+// FIX: fail fast with a clear message if critical secrets are missing, instead of
+// throwing a cryptic "secretOrPrivateKey must have a value" only at first login.
+const REQUIRED_ENV = ['MONGODB_URI', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
+const missingEnv = REQUIRED_ENV.filter((k) => !process.env[k]);
+if (missingEnv.length) {
+  logger.error(`❌ Missing required environment variables: ${missingEnv.join(', ')}. Set them in your .env / hosting dashboard before starting.`);
+  process.exit(1);
+}
+if (process.env.NODE_ENV === 'production' && !process.env.CLIENT_URL) {
+  logger.warn('⚠️  CLIENT_URL is not set in production — CORS and email links may not work correctly.');
+}
+
 // Connect to databases
 connectDB();
-connectRedis();
+// FIX: initialise Bull queues only once Redis has actually connected (single-process,
+// inline processors — no separate worker process needed on Render free tier).
+connectRedis().then(() => {
+  try {
+    require('./jobs').initQueues();
+  } catch (e) {
+    logger.warn(`Queue init skipped: ${e.message}`);
+  }
+});
 
 // Initialize Socket.io
 initSocket(server);
@@ -127,7 +147,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-app.get('/metrics', async (req, res) => {
+const { authenticate, authorize } = require('./middlewares/auth.middleware');
+app.get('/metrics', authenticate, authorize('superAdmin'), async (req, res) => {
   const memUsage = process.memoryUsage();
   res.json({
     memory: {

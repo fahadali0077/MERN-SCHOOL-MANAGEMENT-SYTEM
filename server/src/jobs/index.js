@@ -26,13 +26,16 @@ let reportQueue = nullQueue;
 let smsQueue = nullQueue;
 let notificationQueue = nullQueue;
 
-// FIX: Initialise Bull queues only if Redis is available.
-// Called after connectRedis() resolves in app.js.
+// FIX: Initialise Bull queues only if Redis is actually available.
+// Called explicitly from app.js AFTER connectRedis() resolves (was previously run at
+// require-time gated only on REDIS_URL being set, so a set-but-unreachable Redis still
+// tried to construct queues).
 const initQueues = () => {
-  if (!process.env.REDIS_URL) {
-    logger.warn('⚠️  Bull queues disabled — REDIS_URL not set');
+  if (!process.env.REDIS_URL || !isRedisAvailable()) {
+    logger.warn('⚠️  Bull queues disabled — Redis not available');
     return;
   }
+  if (emailQueue !== nullQueue) return; // already initialised
 
   try {
     const Bull = require('bull');
@@ -119,10 +122,8 @@ const initQueues = () => {
   }
 };
 
-// FIX: Single-process mode — run processors inline in app.js process.
-// No separate worker.js process needed (critical for Render free tier single-process constraint).
-// Call initQueues() from app.js after connectRedis() resolves.
-initQueues();
+// FIX: Do NOT auto-run at require time. app.js calls initQueues() after Redis connects.
+// (Auto-running here ran before Redis was confirmed available.)
 
 // ─── Queue stats helper ───────────────────────────────────────────────────────
 const getQueueStats = async () => {
@@ -139,9 +140,12 @@ const getQueueStats = async () => {
 };
 
 module.exports = {
-  emailQueue,
-  reportQueue,
-  smsQueue,
-  notificationQueue,
+  initQueues,
+  // Live getters so callers always see the real queue after initQueues() runs
+  // (a plain object literal would freeze the nullQueue references at export time).
+  get emailQueue() { return emailQueue; },
+  get reportQueue() { return reportQueue; },
+  get smsQueue() { return smsQueue; },
+  get notificationQueue() { return notificationQueue; },
   jobs: { getStats: getQueueStats }
 };

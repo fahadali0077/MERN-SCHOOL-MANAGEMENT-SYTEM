@@ -26,8 +26,9 @@ const notificationService = {
       // Non-critical
     }
 
-    // Invalidate notification cache
-    await cache.del(`notifications:${recipient}`);
+    // FIX: getForUser caches under notifications:<id>:<page>:<unreadOnly>, so a single
+    // del(notifications:<id>) never matched. Use delPattern to clear all pages.
+    await cache.delPattern(`notifications:${recipient}:*`);
 
     return notification;
   },
@@ -40,6 +41,9 @@ const notificationService = {
         io.to(`user:${notif.recipient}`).emit('notification:new', notif);
       }
     }
+    // FIX: clear each recipient's cached notification pages so new ones show immediately
+    const recipients = [...new Set(created.map(n => n.recipient.toString()))];
+    await Promise.all(recipients.map(r => cache.delPattern(`notifications:${r}:*`)));
     return created;
   },
 

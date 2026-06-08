@@ -42,10 +42,56 @@ const schoolController = {
   },
 
   async create(req, res, next) {
+    const mongoose = require('mongoose');
+    const crypto = require('crypto');
+    const emailService = require('../services/email.service');
+    const logger = require('../utils/logger');
+
+    const { adminFirstName, adminLastName, adminEmail, ...schoolData } = req.body;
+
+    const session = await mongoose.startSession();
     try {
-      const school = await School.create(req.body);
-      return successResponse(res, school, 'School created', 201);
-    } catch (err) { next(err); }
+      let result;
+      await session.withTransaction(async () => {
+        // Create the school
+        const [school] = await School.create([schoolData], { session });
+
+        // FIX: optionally provision the first schoolAdmin so the school is usable.
+        // Previously schools were created with no admin and no way to log in.
+        if (adminEmail && adminFirstName && adminLastName) {
+          const existing = await User.findOne({ email: adminEmail }).session(session);
+          if (existing) throw new AppError('Admin email already registered', 409);
+
+          const tempPassword = crypto.randomBytes(8).toString('hex');
+          const [admin] = await User.create([{
+            firstName: adminFirstName,
+            lastName: adminLastName,
+            email: adminEmail,
+            password: tempPassword,
+            role: 'schoolAdmin',
+            schoolId: school._id,
+            isActive: true,
+          }], { session });
+
+          school.admin = admin._id;
+          await school.save({ session });
+
+          // Send credentials (non-fatal if email is down)
+          try { await emailService.sendWelcomeEmail(admin, tempPassword); }
+          catch (e) { logger.warn(`School admin welcome email failed: ${e.message}`); }
+        }
+
+        result = school;
+      });
+
+      await cache.del('superadmin:overview');
+      const populated = await School.findById(result._id).populate('admin', 'firstName lastName email');
+      return successResponse(res, populated, 'School created', 201);
+    } catch (err) {
+      next(err);
+    } finally {
+      session.endSession();
+    }
   },
 
   async update(req, res, next) {

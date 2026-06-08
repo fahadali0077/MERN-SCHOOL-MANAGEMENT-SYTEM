@@ -114,7 +114,15 @@ const attendanceController = {
   // Student scans QR code
   async scanQR(req, res, next) {
     try {
-      const { token, studentId } = req.body;
+      const { token } = req.body;
+      const schoolId = req.user.schoolId;
+
+      // FIX: the student is the AUTHENTICATED user — never trust a studentId from the
+      // request body (a student could otherwise mark anyone present).
+      const Student = require('../models/Student.model');
+      const student = await Student.findOne({ userId: req.user._id, schoolId }).select('_id').lean();
+      if (!student) return next(new AppError('Student record not found for this account', 404));
+      const studentId = student._id;
 
       const attendance = await Attendance.findOne({
         'qrSession.token': token,
@@ -124,7 +132,7 @@ const attendanceController = {
 
       if (!attendance) return next(new AppError('QR code is invalid or expired', 400));
 
-      const existingRecord = attendance.records.find(r => r.studentId.toString() === studentId);
+      const existingRecord = attendance.records.find(r => r.studentId.toString() === studentId.toString());
       if (existingRecord) return next(new AppError('Attendance already marked', 409));
 
       attendance.records.push({

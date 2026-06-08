@@ -36,7 +36,16 @@ const userSchema = new mongoose.Schema({
   loginAttempts: { type: Number, default: 0 },
   lockUntil: Date,
   preferences: {
-    notifications: { email: { type: Boolean, default: true }, sms: { type: Boolean, default: false }, push: { type: Boolean, default: true } },
+    notifications: {
+      email: { type: Boolean, default: true },
+      sms: { type: Boolean, default: false },
+      push: { type: Boolean, default: true },
+      // FIX: SettingsPage saves these notification-type toggles; without them in the
+      // schema Mongoose (strict mode) silently dropped them and they never persisted.
+      attendance: { type: Boolean, default: true },
+      fees: { type: Boolean, default: true },
+      results: { type: Boolean, default: true }
+    },
     theme: { type: String, enum: ['dark', 'light'], default: 'dark' },
     language: { type: String, default: 'en' }
   }

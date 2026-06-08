@@ -10,12 +10,18 @@ const { cache } = require('../config/redis');
 const dashboardController = {
   async getAdminDashboard(req, res, next) {
     try {
+      const mongoose = require('mongoose');
       const schoolId = req.user.schoolId;
+      if (!schoolId) return successResponse(res, {}, 'Dashboard data fetched');
+      // FIX: aggregation $match does NOT auto-cast strings to ObjectId
+      const sid = new mongoose.Types.ObjectId(schoolId);
       const cacheKey = `dashboard:admin:${schoolId}`;
       const cached = await cache.get(cacheKey);
       if (cached) return successResponse(res, cached, 'Dashboard data fetched');
 
-      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const todayMidnight = new Date(); todayMidnight.setHours(0, 0, 0, 0);
+      const todayEnd = new Date(todayMidnight); todayEnd.setHours(23, 59, 59, 999);
+      const today = todayMidnight;
       const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
       const lastMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
       const lastMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
@@ -33,32 +39,32 @@ const dashboardController = {
         User.countDocuments({ schoolId, role: 'teacher' }),
         User.countDocuments({ schoolId, role: 'teacher', isActive: true }),
         Attendance.aggregate([
-          { $match: { schoolId, date: today } },
+          { $match: { schoolId: sid, date: { $gte: todayMidnight, $lte: todayEnd } } },
           { $unwind: '$records' },
           { $group: { _id: '$records.status', count: { $sum: 1 } } }
         ]),
         FeeInvoice.aggregate([
-          { $match: { schoolId, 'payments.date': { $gte: monthStart } } },
+          { $match: { schoolId: sid, 'payments.date': { $gte: monthStart } } },
           { $unwind: '$payments' },
           { $match: { 'payments.date': { $gte: monthStart } } },
           { $group: { _id: null, total: { $sum: '$payments.amount' } } }
         ]),
         FeeInvoice.aggregate([
-          { $match: { schoolId, 'payments.date': { $gte: lastMonthStart, $lte: lastMonthEnd } } },
+          { $match: { schoolId: sid, 'payments.date': { $gte: lastMonthStart, $lte: lastMonthEnd } } },
           { $unwind: '$payments' },
           { $match: { 'payments.date': { $gte: lastMonthStart, $lte: lastMonthEnd } } },
           { $group: { _id: null, total: { $sum: '$payments.amount' } } }
         ]),
         Notice.find({ schoolId, isPublished: true }).sort({ createdAt: -1 }).limit(5).select('title type createdAt priority'),
         FeeInvoice.aggregate([
-          { $match: { schoolId } },
+          { $match: { schoolId: sid } },
           { $group: { _id: '$status', count: { $sum: 1 }, amount: { $sum: '$totalAmount' } } }
         ]),
         Exam.find({ schoolId, startDate: { $gte: today } }).sort({ startDate: 1 }).limit(5)
           .populate('classId', 'name section'),
         // Last 7 days attendance trend
         Attendance.aggregate([
-          { $match: { schoolId, date: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } },
+          { $match: { schoolId: sid, date: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } },
           { $unwind: '$records' },
           { $group: {
             _id: { date: { $dateToString: { format: '%Y-%m-%d', date: '$date' } }, status: '$records.status' },
@@ -132,6 +138,7 @@ const dashboardController = {
 
   async getStudentDashboard(req, res, next) {
     try {
+      const mongoose = require('mongoose');
       const userId = req.user._id;
       const schoolId = req.user.schoolId;
 
@@ -140,9 +147,11 @@ const dashboardController = {
 
       if (!student) return successResponse(res, {}, 'Dashboard fetched');
 
+      const sid = schoolId ? new mongoose.Types.ObjectId(schoolId) : undefined;
+
       const [attendanceStats, recentMarks, pendingFees, notices] = await Promise.all([
         Attendance.aggregate([
-          { $match: { schoolId, 'records.studentId': student._id } },
+          { $match: { schoolId: sid, 'records.studentId': student._id } },
           { $unwind: '$records' },
           { $match: { 'records.studentId': student._id } },
           { $group: { _id: '$records.status', count: { $sum: 1 } } }

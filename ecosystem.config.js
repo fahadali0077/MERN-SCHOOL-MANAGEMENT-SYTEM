@@ -4,8 +4,11 @@ module.exports = {
       name: 'sms-server',
       script: 'src/app.js',
       cwd: './server',
-      instances: 'max',           // Cluster mode - one per CPU core
-      exec_mode: 'cluster',
+      // FIX: inline Bull queue processors run in THIS process. Cluster mode ('max')
+      // would register the processors in every worker and double-process jobs, so we
+      // run a single instance. (To scale out, move processors to a dedicated worker.)
+      instances: 1,
+      exec_mode: 'fork',
       watch: false,
       max_memory_restart: '512M',
       env: {
@@ -29,23 +32,13 @@ module.exports = {
       min_uptime: '10s',
       // Graceful shutdown
       kill_timeout: 10000,
-      wait_ready: true,
       listen_timeout: 10000,
     },
 
-    // Bull queue worker (separate process)
-    {
-      name: 'sms-worker',
-      script: 'src/jobs/worker.js',
-      cwd: './server',
-      instances: 2,
-      exec_mode: 'fork',         // Fork mode for workers
-      watch: false,
-      max_memory_restart: '256M',
-      env: { NODE_ENV: 'production' },
-      error_file: './logs/worker-error.log',
-      out_file: './logs/worker-out.log',
-      restart_delay: 5000,
-    },
+    // NOTE: Bull queue processors run INLINE in the app process (see server/src/jobs/index.js,
+    // initialised from app.js after Redis connects). A separate worker process is intentionally
+    // NOT defined here — running both would double-process every job. To scale workers out later,
+    // move processors into worker.js, stop calling initQueues() from app.js, and add a fork-mode
+    // app entry for src/jobs/worker.js.
   ],
 };

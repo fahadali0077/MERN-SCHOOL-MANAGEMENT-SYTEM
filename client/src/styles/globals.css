@@ -340,11 +340,19 @@
  * Activated by "Print Report Card" (window.print()) / Ctrl+P on the report card.
  */
 @media print {
+  /* Hide only the app chrome — NOT the report card itself.
+     The previous [class*="animate-"] rule hid the report (it has animate-fade-up). */
   aside, header, nav,
   .print\:hidden,
-  [class*="animate-"],
   [class*="sidebar"] {
     display: none !important;
+  }
+
+  /* Neutralise entry animations for print without hiding the element */
+  [class*="animate-"] {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
   }
 
   body, #root, .flex, .flex-1, main {

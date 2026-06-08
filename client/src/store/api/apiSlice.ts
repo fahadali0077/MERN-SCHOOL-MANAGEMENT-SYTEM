@@ -40,7 +40,11 @@ const baseQueryWithReauth = async (args: any, api: any, extraOptions: any) => {
       // Retry the original request with the new token now in state
       result = await baseQuery(args, api, extraOptions);
     } else {
+      // FIX: on failed refresh, clear auth + RTK cache + socket so no stale
+      // session data lingers for the next user.
       api.dispatch(logout());
+      api.dispatch(apiSlice.util.resetApiState());
+      import('../../hooks/useSocket').then(({ disconnectSocket }) => disconnectSocket());
     }
   }
 

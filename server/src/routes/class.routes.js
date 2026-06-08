@@ -20,7 +20,8 @@ router.get('/', async (req, res, next) => {
       .populate('classTeacher', 'firstName lastName avatar')
       .populate('subjects.subjectId', 'name code')
       .populate('subjects.teacherId', 'firstName lastName')
-      .sort({ grade: 1, section: 1 });
+      .sort({ grade: 1, section: 1 })
+      .limit(500); // FIX: safety cap (dropdowns need the full list; cached 300s)
 
     await cache.set(cacheKey, classes, 300);
     return successResponse(res, classes, 'Classes fetched');

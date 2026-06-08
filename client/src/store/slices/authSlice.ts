@@ -62,6 +62,20 @@ const authSlice = createSlice({
 export const { setCredentials, setToken, setUser, logout, setLoading } = authSlice.actions;
 export default authSlice.reducer;
 
+// FIX: Centralised logout that also clears the RTK Query cache (prevents the previous
+// user's cached students/fees/etc. leaking into the next session) and tears down the
+// socket. Use this everywhere instead of dispatching the bare `logout` action.
+export const performLogout = () => (dispatch: any) => {
+  dispatch(logout());
+  // Lazy-require to avoid circular imports at module load
+  import('../api/apiSlice').then(({ apiSlice }) => {
+    dispatch(apiSlice.util.resetApiState());
+  });
+  import('../../hooks/useSocket').then(({ disconnectSocket }) => {
+    disconnectSocket();
+  });
+};
+
 export const selectCurrentUser = (state: { auth: AuthState }) => state.auth.user;
 export const selectIsAuthenticated = (state: { auth: AuthState }) => state.auth.isAuthenticated;
 export const selectUserRole = (state: { auth: AuthState }) => state.auth.user?.role;

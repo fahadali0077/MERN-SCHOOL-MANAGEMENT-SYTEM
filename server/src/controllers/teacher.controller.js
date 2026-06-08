@@ -113,7 +113,10 @@ const teacherController = {
 
   async getStats(req, res, next) {
     try {
+      const mongoose = require('mongoose');
       const schoolId = req.user.schoolId;
+      if (!schoolId) return successResponse(res, { total: 0, active: 0, inactive: 0, withClasses: 0 }, 'Stats fetched');
+      const sid = new mongoose.Types.ObjectId(schoolId);
       const cacheKey = `teacher-stats:${schoolId}`;
       const cached = await cache.get(cacheKey);
       if (cached) return successResponse(res, cached, 'Stats fetched');
@@ -122,7 +125,7 @@ const teacherController = {
         User.countDocuments({ schoolId, role: 'teacher' }),
         User.countDocuments({ schoolId, role: 'teacher', isActive: true }),
         Class.aggregate([
-          { $match: { schoolId, isActive: true } },
+          { $match: { schoolId: sid, isActive: true } },
           { $unwind: '$subjects' },
           { $group: { _id: '$subjects.teacherId' } },
           { $count: 'count' }

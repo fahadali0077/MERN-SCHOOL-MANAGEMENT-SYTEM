@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { apiSlice } from '../../store/api/apiSlice';
 import { Plus, Search, School, Users, GraduationCap, ToggleLeft, ToggleRight, X, Loader2, Globe } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -40,10 +40,20 @@ const planBadge: Record<string, string> = {
 export default function SchoolsPage() {
   useWindowTitle('Schools');
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [showCreate, setShowCreate] = useState(false);
 
-  const { data, isLoading } = useGetSchoolsQuery({ page, search });
+  // FIX: debounce search so we don't fire a request on every keystroke
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (searchTimer.current) clearTimeout(searchTimer.current); }, []);
+  const handleSearch = (val: string) => {
+    setSearch(val);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => { setDebouncedSearch(val); setPage(1); }, 400);
+  };
+
+  const { data, isLoading } = useGetSchoolsQuery({ page, search: debouncedSearch });
   const { data: overviewData } = useGetOverviewQuery();
   const [createSchool, { isLoading: isCreating }] = useCreateSchoolMutation();
   const [toggleSchool] = useToggleSchoolMutation();
@@ -119,7 +129,7 @@ export default function SchoolsPage() {
         <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary" />
         <input
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          onChange={(e) => handleSearch(e.target.value)}
           placeholder="Search schools..."
           className="input pl-9 text-sm"
         />
@@ -253,15 +263,40 @@ export default function SchoolsPage() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Email *</label>
-                <input {...register('email', { required: 'Email is required' })} type="email" placeholder="admin@school.edu" className="input mt-1.5" />
+                <input {...register('email', { required: 'Email is required' })} type="email" placeholder="contact@school.edu" className="input mt-1.5" />
+                {errors.email && <p className="text-danger text-xs mt-1">{String(errors.email.message)}</p>}
               </div>
               <div>
-                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Phone</label>
-                <input {...register('phone')} placeholder="+1-555-0100" className="input mt-1.5" />
+                <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Phone *</label>
+                <input {...register('phone', { required: 'Phone is required' })} placeholder="+1-555-0100" className="input mt-1.5" />
+                {errors.phone && <p className="text-danger text-xs mt-1">{String(errors.phone.message)}</p>}
               </div>
               <div>
                 <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">City</label>
                 <input {...register('address.city')} placeholder="San Francisco" className="input mt-1.5" />
+              </div>
+
+              {/* FIX: provision the school's first admin so the school is actually usable */}
+              <div className="pt-2 border-t border-white/5">
+                <p className="text-xs font-semibold text-accent uppercase tracking-wider mb-3">School Administrator (login account)</p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Admin First Name *</label>
+                    <input {...register('adminFirstName', { required: 'Required' })} placeholder="Sarah" className="input mt-1.5" />
+                    {errors.adminFirstName && <p className="text-danger text-xs mt-1">{String(errors.adminFirstName.message)}</p>}
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Admin Last Name *</label>
+                    <input {...register('adminLastName', { required: 'Required' })} placeholder="Mitchell" className="input mt-1.5" />
+                    {errors.adminLastName && <p className="text-danger text-xs mt-1">{String(errors.adminLastName.message)}</p>}
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Admin Email *</label>
+                  <input {...register('adminEmail', { required: 'Required' })} type="email" placeholder="admin@school.edu" className="input mt-1.5" />
+                  {errors.adminEmail && <p className="text-danger text-xs mt-1">{String(errors.adminEmail.message)}</p>}
+                  <p className="text-[10px] text-text-tertiary mt-1">A temporary password is emailed to the admin on creation.</p>
+                </div>
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowCreate(false)} className="btn-secondary flex-1">Cancel</button>

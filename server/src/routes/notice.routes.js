@@ -6,14 +6,15 @@ const { successResponse, paginationHelper, buildQuery } = require('../utils/apiR
 const { AppError } = require('../middlewares/errorHandler');
 const { cache } = require('../config/redis');
 const notificationService = require('../services/notification.service');
+const { createNoticeValidator } = require('../validators');
 
 router.use(authenticate);
 
 router.get('/', async (req, res, next) => {
   try {
-    const { skip, limit, sort, page, filterQuery } = buildQuery(req.query);
+    const { skip, limit, sort, page, search, filterQuery } = buildQuery(req.query);
     const schoolId = req.user.schoolId;
-    const cacheKey = `notices:${schoolId}:${page}`;
+    const cacheKey = `notices:${schoolId}:${page}:${search || ''}:${req.query.type || ''}`;
     const cached = await cache.get(cacheKey);
     if (cached) return successResponse(res, cached.data, 'Notices fetched', 200, cached.pagination);
 
@@ -47,7 +48,7 @@ router.get('/:id', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/', authorize('schoolAdmin', 'superAdmin', 'teacher'), async (req, res, next) => {
+router.post('/', authorize('schoolAdmin', 'superAdmin', 'teacher'), createNoticeValidator, async (req, res, next) => {
   try {
     const notice = await Notice.create({ ...req.body, schoolId: req.user.schoolId, author: req.user._id });
     

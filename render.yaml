@@ -28,9 +28,9 @@ services:
         sync: false
       - key: JWT_REFRESH_SECRET
         sync: false
-      - key: JWT_ACCESS_EXPIRES_IN
+      - key: JWT_ACCESS_EXPIRES
         value: 15m
-      - key: JWT_REFRESH_EXPIRES_IN
+      - key: JWT_REFRESH_EXPIRES
         value: 7d
       - key: REDIS_URL
         sync: false        # Upstash rediss:// URL
@@ -42,13 +42,19 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      # ─── Email: Brevo (recommended) ───────────────────────────────────────
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SMTP_USER
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      # ─── Email: SMTP fallback (optional — leave unset if using Brevo) ─────
       - key: SMTP_HOST
-        value: smtp.gmail.com
+        sync: false
       - key: SMTP_PORT
-        value: 587
+        sync: false
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASS
-        sync: false
-      - key: EMAIL_FROM
         sync: false

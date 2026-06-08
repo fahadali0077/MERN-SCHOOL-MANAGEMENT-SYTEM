@@ -8,7 +8,7 @@ import {
   MessageCircle, BookMarked, Globe, TrendingUp, Sun, Moon
 } from 'lucide-react';
 import { selectCurrentUser, selectUserRole } from '../../store/slices/authSlice';
-import { logout } from '../../store/slices/authSlice';
+import { performLogout } from '../../store/slices/authSlice';
 import { toggleTheme, selectTheme } from '../../store/slices/uiSlice';
 import { RootState } from '../../store';
 import { useLogoutMutation } from '../../store/api/endpoints';
@@ -90,7 +90,7 @@ function Sidebar({ collapsed = false, onToggleCollapse, mobile = false, onClose 
 
   const handleLogout = async () => {
     try { await logoutMutation().unwrap(); } catch {}
-    dispatch(logout());
+    dispatch(performLogout() as any);
     navigate('/auth/login');
   };
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useGetClassesQuery, useMarkAttendanceMutation, useGetAttendanceQuery, useGenerateQRMutation } from '../../store/api/endpoints';
+import { useGetClassesQuery, useMarkAttendanceMutation, useGetAttendanceQuery, useGenerateQRMutation, useGetStudentsQuery } from '../../store/api/endpoints';
 import { QrCode, CheckCircle, XCircle, Clock, RefreshCw, Save, Loader2, Users } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useWindowTitle } from '../../hooks';
@@ -28,10 +28,19 @@ export default function AttendancePage() {
     { skip: !selectedClass }
   );
 
+  // FIX: fetch the full class roster so attendance can be marked even when no
+  // attendance document exists yet for this date (the original page only rendered
+  // rows from an EXISTING attendance doc, so a fresh day had nothing to mark).
+  const { data: rosterData, isLoading: rosterLoading } = useGetStudentsQuery(
+    { classId: selectedClass, limit: 200 },
+    { skip: !selectedClass }
+  );
+  const roster = rosterData?.data || [];
+
   const [markAttendance, { isLoading: isSaving }] = useMarkAttendanceMutation();
   const [generateQR, { isLoading: isGeneratingQR }] = useGenerateQRMutation();
 
-  // Load existing attendance records into state
+  // Load existing attendance records into state (seed statuses for already-marked students)
   useEffect(() => {
     if (attendanceData?.data?.records) {
       const rec: Record<string, string> = {};
@@ -39,8 +48,10 @@ export default function AttendancePage() {
         rec[r.studentId?._id || r.studentId] = r.status;
       });
       setRecords(rec);
+    } else {
+      setRecords({});
     }
-  }, [attendanceData]);
+  }, [attendanceData, selectedClass, selectedDate]);
 
   // Load class students when class changes
   const selectedClassData = classes.find((c: any) => c._id === selectedClass);
@@ -53,17 +64,20 @@ export default function AttendancePage() {
   };
 
   const markAll = (status: string) => {
-    if (!selectedClassData) return;
+    if (!roster.length) return;
     const newRec: Record<string, string> = {};
-    // We'd normally have the student list from the class — mark all present
-    Object.keys(records).forEach(id => { newRec[id] = status; });
+    // Mark every student in the class roster (not just already-loaded records)
+    roster.forEach((s: any) => { newRec[s._id] = status; });
     setRecords(newRec);
   };
 
   const handleSave = async () => {
     if (!selectedClass) return toast.error('Select a class first');
-    const recordsArray = Object.entries(records).map(([studentId, status]) => ({ studentId, status }));
-    if (recordsArray.length === 0) return toast.error('No attendance records to save');
+    // FIX: build the payload from the full roster, defaulting unmarked students to 'absent'
+    const recordsArray = roster.length
+      ? roster.map((s: any) => ({ studentId: s._id, status: records[s._id] || 'absent' }))
+      : Object.entries(records).map(([studentId, status]) => ({ studentId, status }));
+    if (recordsArray.length === 0) return toast.error('No students in this class to mark');
 
     try {
       await markAttendance({
@@ -94,10 +108,14 @@ export default function AttendancePage() {
     }
   };
 
-  const present = Object.values(records).filter(s => s === 'present').length;
-  const absent = Object.values(records).filter(s => s === 'absent').length;
-  const late = Object.values(records).filter(s => s === 'late').length;
-  const total = Object.keys(records).length;
+  // Summary reflects the roster (unmarked students count as absent)
+  const effectiveStatuses = roster.length
+    ? roster.map((s: any) => records[s._id] || 'absent')
+    : Object.values(records);
+  const present = effectiveStatuses.filter((s: string) => s === 'present').length;
+  const absent = effectiveStatuses.filter((s: string) => s === 'absent').length;
+  const late = effectiveStatuses.filter((s: string) => s === 'late').length;
+  const total = effectiveStatuses.length;
 
   if (isError) return (
     <div className="p-6 flex items-center justify-center min-h-64">
@@ -176,7 +194,12 @@ export default function AttendancePage() {
           </div>
 
           {/* Student list */}
-          {attendanceData?.data?.records?.length > 0 ? (
+          {rosterLoading ? (
+            <div className="card p-12 text-center animate-fade-up">
+              <Loader2 size={28} className="mx-auto text-accent animate-spin mb-3" />
+              <p className="text-text-secondary text-sm">Loading class roster…</p>
+            </div>
+          ) : roster.length > 0 ? (
             <div className="card overflow-hidden animate-fade-up animate-fade-up-delay-3">
               <div className="p-4 border-b border-white/5">
                 <p className="text-sm font-medium text-text-secondary">
@@ -184,11 +207,10 @@ export default function AttendancePage() {
                 </p>
               </div>
               <div className="divide-y divide-white/5">
-                {attendanceData.data.records.map((record: any) => {
-                  const student = record.studentId;
+                {roster.map((student: any) => {
                   const user = student?.userId;
-                  const sid = student?._id || record.studentId;
-                  const status = records[sid] || record.status || 'absent';
+                  const sid = student._id;
+                  const status = records[sid] || 'absent';
                   const cfg = statusConfig[status] || statusConfig.absent;
 
                   return (
@@ -215,8 +237,8 @@ export default function AttendancePage() {
           ) : (
             <div className="card p-12 text-center animate-fade-up">
               <Users size={48} className="mx-auto text-text-tertiary mb-3 opacity-30" />
-              <p className="text-text-secondary text-sm">No attendance records yet for this class on this date.</p>
-              <p className="text-text-tertiary text-xs mt-1">Use QR code or manually mark attendance.</p>
+              <p className="text-text-secondary text-sm">No students enrolled in this class.</p>
+              <p className="text-text-tertiary text-xs mt-1">Add students to this class first.</p>
             </div>
           )}
         </>

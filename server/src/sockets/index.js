@@ -5,9 +5,20 @@ const logger = require('../utils/logger');
 let io;
 
 const initSocket = (server) => {
+  // FIX: Match the HTTP CORS allow-list exactly (was only CLIENT_URL || localhost:5173,
+  // which rejected sockets from otherwise-allowed origins like localhost:3000).
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3000',
+    ...(process.env.CLIENT_URL ? [process.env.CLIENT_URL] : []),
+  ];
+
   io = new Server(server, {
     cors: {
-      origin: process.env.CLIENT_URL || 'http://localhost:5173',
+      origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin)) callback(null, true);
+        else callback(new Error(`Socket CORS: origin not allowed — ${origin}`));
+      },
       credentials: true
     },
     pingTimeout: 60000,

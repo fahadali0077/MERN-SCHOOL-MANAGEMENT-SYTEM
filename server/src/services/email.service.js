@@ -17,6 +17,31 @@ const initTransporter = () => {
   try {
     const nodemailer = require('nodemailer');
 
+    // Brevo (formerly Sendinblue) — preferred provider.
+    // Brevo's transactional SMTP relay accepts the API key as the SMTP password,
+    // so we can use it through nodemailer with no extra SDK.
+    //   BREVO_API_KEY    = your Brevo SMTP/API key (xkeysib-...)
+    //   BREVO_SMTP_USER  = the login shown on Brevo → SMTP & API → SMTP (e.g. 8xxxxx@smtp-brevo.com)
+    //   EMAIL_FROM       = a verified sender address in your Brevo account
+    if (process.env.BREVO_API_KEY) {
+      transporter = nodemailer.createTransport({
+        host: 'smtp-relay.brevo.com',
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.BREVO_SMTP_USER || process.env.EMAIL_FROM,
+          pass: process.env.BREVO_API_KEY
+        }
+      });
+      emailEnabled = true;
+      if (!process.env.BREVO_SMTP_USER) {
+        logger.warn('⚠️  BREVO_SMTP_USER not set — falling back to EMAIL_FROM as SMTP login. ' +
+          'Set BREVO_SMTP_USER to the login from Brevo → SMTP & API → SMTP for reliable auth.');
+      }
+      logger.info('📧 Email: using Brevo');
+      return transporter;
+    }
+
     if (process.env.SENDGRID_API_KEY) {
       transporter = nodemailer.createTransport({
         host: 'smtp.sendgrid.net',
@@ -56,7 +81,7 @@ const initTransporter = () => {
       return null;
     }
 
-    logger.warn('⚠️  Email disabled — set SMTP_HOST/USER/PASS or SENDGRID_API_KEY to enable');
+    logger.warn('⚠️  Email disabled — set BREVO_API_KEY (recommended), SENDGRID_API_KEY, or SMTP_HOST/USER/PASS to enable');
     return null;
   } catch (err) {
     logger.warn(`⚠️  Email init failed: ${err.message} — email features disabled`);

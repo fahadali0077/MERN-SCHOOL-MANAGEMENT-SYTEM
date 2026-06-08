@@ -25,10 +25,11 @@ const assignmentApi = apiSlice.injectEndpoints({
     }),
     // FIX: Student submission endpoint — was missing entirely
     submitAssignment: b.mutation<any, { assignmentId: string; content: string }>({
-      query: ({ assignmentId, ...data }) => ({
+      query: ({ assignmentId, content }) => ({
         url: `/assignments/${assignmentId}/submit`,
         method: 'POST',
-        body: data,
+        // FIX: server reads req.body.text — was sending { content } which saved undefined
+        body: { text: content },
       }),
       invalidatesTags: ['Assignments'],
     }),
@@ -224,7 +225,7 @@ export default function AssignmentsPage() {
         ) : assignments.map((a: any, i: number) => {
           const isOverdue = new Date(a.dueDate) < new Date() && a.status !== 'closed';
           const dueText = formatDistanceToNow(new Date(a.dueDate), { addSuffix: true });
-          const alreadySubmitted = a.mySubmission != null;
+          const alreadySubmitted = a.hasSubmitted || a.mySubmission != null;
 
           return (
             <div

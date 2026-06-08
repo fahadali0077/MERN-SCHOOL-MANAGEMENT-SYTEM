@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { selectCurrentUser, selectIsAuthenticated, selectUserRole, logout } from '../store/slices/authSlice';
+import { selectCurrentUser, selectIsAuthenticated, selectUserRole, performLogout } from '../store/slices/authSlice';
 import { useLogoutMutation } from '../store/api/endpoints';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,7 +19,7 @@ export function useAuth() {
     } catch {
       // continue even if API call fails
     }
-    dispatch(logout());
+    dispatch(performLogout() as any);
     navigate('/auth/login');
   }, [logoutMutation, dispatch, navigate]);
 

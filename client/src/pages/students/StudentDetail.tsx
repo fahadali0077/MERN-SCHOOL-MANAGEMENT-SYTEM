@@ -81,7 +81,8 @@ export default function StudentDetail() {
       const formData = new FormData();
       formData.append('document', file);
       formData.append('name', file.name);
-      formData.append('type', file.type.includes('pdf') ? 'pdf' : 'other');
+      // 'pdf' is NOT a valid Student.documents.type enum value — use 'photo' for images, else 'other'
+      formData.append('type', file.type.startsWith('image/') ? 'photo' : 'other');
       await uploadDocument({ studentId: student._id, formData }).unwrap();
       toast.success('Document uploaded');
     } catch (err: any) {

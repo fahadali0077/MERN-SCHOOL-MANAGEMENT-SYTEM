@@ -42,15 +42,27 @@ const feeController = {
 
       if (!structure) return next(new AppError('Fee structure not found', 404));
 
+      // FIX (N+1): fetch all existing invoices for this period in ONE query instead of
+      // calling FeeInvoice.findOne() inside the loop (was 1 round-trip per student).
+      const studentIds = students.map(s => s._id);
+      const existing = await FeeInvoice.find({
+        schoolId, month, year, studentId: { $in: studentIds }
+      }).select('studentId').lean();
+      const alreadyInvoiced = new Set(existing.map(e => e.studentId.toString()));
+
+      // Use the real school code for invoice numbers (was hardcoded 'SCH')
+      const School = require('../models/School.model');
+      const school = await School.findById(schoolId).select('code').lean();
+      const schoolCode = school?.code || 'SCH';
+
       const existingCount = await FeeInvoice.countDocuments({ schoolId });
       const invoices = [];
+      let seq = 0;
 
       for (let i = 0; i < students.length; i++) {
         const student = students[i];
-        
-        // Check if invoice already exists
-        const exists = await FeeInvoice.findOne({ schoolId, studentId: student._id, month, year });
-        if (exists) continue;
+
+        if (alreadyInvoiced.has(student._id.toString())) continue;
 
         const discount = student.discount || 0;
         const items = structure.components.map(c => ({
@@ -60,12 +72,12 @@ const feeController = {
           finalAmount: c.amount - (c.amount * discount) / 100
         }));
 
-        const subtotal = items.reduce((a, i) => a + i.amount, 0);
-        const discountAmount = items.reduce((a, i) => a + i.discount, 0);
+        const subtotal = items.reduce((a, it) => a + it.amount, 0);
+        const discountAmount = items.reduce((a, it) => a + it.discount, 0);
         const totalAmount = subtotal - discountAmount;
 
         invoices.push({
-          invoiceNumber: generateInvoiceNumber('SCH', existingCount + i),
+          invoiceNumber: generateInvoiceNumber(schoolCode, existingCount + seq),
           schoolId, studentId: student._id, feeStructureId,
           month, year,
           dueDate: new Date(dueDate),
@@ -74,6 +86,7 @@ const feeController = {
           totalAmount, paidAmount: 0,
           balanceDue: totalAmount
         });
+        seq++;
       }
 
       if (invoices.length === 0) {

@@ -10,6 +10,7 @@ import { selectIsAuthenticated, selectUserRole } from './store/slices/authSlice'
 import { selectTheme } from './store/slices/uiSlice';
 import { RootState } from './store';
 import { useSocket } from './hooks/useSocket';
+import ErrorBoundary from './components/ErrorBoundary';
 import './styles/globals.css';
 
 const L = (fn: () => Promise<any>) => lazy(fn);
@@ -19,6 +20,7 @@ const LoginPage           = L(() => import('./pages/auth/Login'));
 const RegisterPage        = L(() => import('./pages/auth/Register'));
 const ForgotPasswordPage  = L(() => import('./pages/auth/ForgotPassword'));
 const ResetPasswordPage   = L(() => import('./pages/auth/ResetPassword'));
+const VerifyEmailPage     = L(() => import('./pages/auth/VerifyEmail'));
 const DashboardLayout     = L(() => import('./components/layout/DashboardLayout'));
 const AdminDashboard      = L(() => import('./pages/dashboard/AdminDashboard'));
 const SuperAdminDashboard = L(() => import('./pages/dashboard/SuperAdminDashboard'));
@@ -113,6 +115,7 @@ function AppRoutes() {
           <Route path="/auth/register" element={<RegisterPage />} />
           <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
 
           <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route index element={<DashboardRedirect />} />
@@ -154,16 +157,18 @@ function AppRoutes() {
 export default function App() {
   return (
     <Provider store={store}>
-      <BrowserRouter>
-        <ThemeApplier />
-        <AppRoutes />
-        <Toaster position="top-right" gutter={8} toastOptions={{
-          duration: 4000,
-          style: { background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '0.5px solid var(--border)', borderRadius: '12px', fontSize: '14px' },
-          success: { iconTheme: { primary: '#10B981', secondary: 'var(--bg-secondary)' } },
-          error: { iconTheme: { primary: '#EF4444', secondary: 'var(--bg-secondary)' } },
-        }} />
-      </BrowserRouter>
+      <ErrorBoundary>
+        <BrowserRouter>
+          <ThemeApplier />
+          <AppRoutes />
+          <Toaster position="top-right" gutter={8} toastOptions={{
+            duration: 4000,
+            style: { background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '0.5px solid var(--border)', borderRadius: '12px', fontSize: '14px' },
+            success: { iconTheme: { primary: '#10B981', secondary: 'var(--bg-secondary)' } },
+            error: { iconTheme: { primary: '#EF4444', secondary: 'var(--bg-secondary)' } },
+          }} />
+        </BrowserRouter>
+      </ErrorBoundary>
     </Provider>
   );
 }

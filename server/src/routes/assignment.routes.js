@@ -31,7 +31,23 @@ router.get('/', async (req, res, next) => {
       Assignment.countDocuments(filter)
     ]);
 
-    return successResponse(res, assignments, 'Assignments fetched', 200, paginationHelper(page, limit, total));
+    // FIX: tell the requesting student whether THEY have already submitted each one,
+    // so the UI can show a "Submitted" state and prevent duplicate submits.
+    let result = assignments;
+    if (req.user.role === 'student') {
+      const Student = require('../models/Student.model');
+      const me = await Student.findOne({ userId: req.user._id, schoolId }).select('_id').lean();
+      const myId = me?._id?.toString();
+      result = assignments.map((a) => {
+        const obj = a.toObject({ virtuals: true });
+        const mine = myId && (a.submissions || []).find(s => s.studentId?.toString() === myId);
+        obj.hasSubmitted = !!mine;
+        obj.mySubmission = mine ? { status: mine.status, grade: mine.grade, submittedAt: mine.submittedAt } : null;
+        return obj;
+      });
+    }
+
+    return successResponse(res, result, 'Assignments fetched', 200, paginationHelper(page, limit, total));
   } catch (err) { next(err); }
 });
 
