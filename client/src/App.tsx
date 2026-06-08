@@ -67,23 +67,39 @@ const ThemeApplier = () => {
   return null;
 };
 
-// FIX: AuthInitializer now uses setUser (not setCredentials) because GET /auth/me
-// does NOT return accessToken. The token only comes from login/register/refresh responses.
+// AuthInitializer — resolves the initial session check exactly once.
+//
+// FIX: The previous implementation kept useGetMeQuery() subscribed even after
+// auth failed, which combined with baseQueryWithReauth dispatching logout() on a
+// failed refresh caused an infinite re-fetch loop visible in the Render logs as
+// hundreds of GET /auth/me + POST /auth/refresh 401s per minute.
+//
+// The fix uses `skip` to stop the query once we know the outcome:
+// - On success  → hydrate the store and stop (skip=true, isResolved=true)
+// - On 401/403  → mark loading done and stop  (skip=true, isResolved=true)
+// This means getMe fires exactly once per app mount, never in a loop.
 const AuthInitializer = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useDispatch();
-  const { data, error, isLoading } = useGetMeQuery();
+  const [skip, setSkip] = React.useState(false);
+
+  const { data, error, isLoading } = useGetMeQuery(undefined, { skip });
   useSocket();
 
   useEffect(() => {
     if (data?.data?.user) {
       dispatch(setUser(data.data.user));
       dispatch(setLoading(false));
+      setSkip(true); // stop polling — session confirmed
     } else if (error) {
+      // Any error (401 from no session, 403 from failed refresh) means "not logged in".
+      // Mark loading done and stop the query so it never re-fires.
+      dispatch(logout());
       dispatch(setLoading(false));
+      setSkip(true);
     }
   }, [data, error, dispatch]);
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading && !skip) return <PageLoader />;
   return <>{children}</>;
 };
 

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80">
+  <defs>
+    <linearGradient id="iconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#0066FF"/>
+    </linearGradient>
+    <linearGradient id="roofGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60A5FA"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icon mark: stylised building/school glyph in a rounded square -->
+  <rect x="8" y="12" width="56" height="56" rx="14" fill="url(#iconGrad)"/>
+
+  <!-- Roof / cap shape -->
+  <polygon points="36,22 54,33 18,33" fill="white" fill-opacity="0.95"/>
+
+  <!-- Building body -->
+  <rect x="22" y="33" width="28" height="22" rx="1" fill="white" fill-opacity="0.9"/>
+
+  <!-- Door (centered) -->
+  <rect x="30" y="43" width="12" height="12" rx="2" fill="url(#iconGrad)"/>
+
+  <!-- Left window -->
+  <rect x="24" y="36" width="6" height="5" rx="1" fill="url(#iconGrad)" fill-opacity="0.7"/>
+
+  <!-- Right window -->
+  <rect x="42" y="36" width="6" height="5" rx="1" fill="url(#iconGrad)" fill-opacity="0.7"/>
+
+  <!-- Flag pole -->
+  <line x1="36" y1="22" x2="36" y2="17" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  <polygon points="36,17 41,19 36,21" fill="white" fill-opacity="0.9"/>
+
+  <!-- Wordmark -->
+  <!-- "School" -->
+  <text x="78" y="38" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="-0.5" fill="#0F172A">School</text>
+  <!-- "MS" accent -->
+  <text x="78" y="62" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="18" font-weight="600" letter-spacing="2" fill="#0066FF">MS</text>
+
+  <!-- Subtle divider line between School and MS -->
+  <line x1="78" y1="66" x2="214" y2="66" stroke="#0066FF" stroke-width="1.5" stroke-linecap="round" opacity="0.25"/>
+
+  <!-- Tagline -->
+  <text x="78" y="74" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="9" font-weight="400" letter-spacing="1.5" fill="#64748B">SCHOOL MANAGEMENT SYSTEM</text>
+</svg>

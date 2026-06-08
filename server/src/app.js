@@ -200,6 +200,36 @@ server.listen(PORT, '0.0.0.0', () => {
   logger.info(`❤️  Health → http://localhost:${PORT}/health`);
 });
 
+// ─── Render free-tier keep-alive ─────────────────────────────────────────────
+// Render free services sleep after 15 min of inactivity. Self-pinging /health
+// every 7 minutes prevents the cold-start delay for users.
+// Only runs when RENDER_SELF_URL (or SELF_URL) is explicitly set in env vars —
+// never in development or CI, and never without an explicit URL (so there's no
+// risk of pinging a wrong host).
+if (process.env.NODE_ENV === 'production') {
+  const selfUrl = process.env.RENDER_SELF_URL || process.env.SELF_URL;
+  if (selfUrl) {
+    const https = require('https');
+    const http  = require('http');
+    const pingUrl = `${selfUrl}/health`;
+    setInterval(() => {
+      const client = pingUrl.startsWith('https') ? https : http;
+      const req = client.get(pingUrl, (res) => {
+        // Only log on unexpected status so we don't spam logs on every ping
+        if (res.statusCode !== 200) {
+          logger.warn(`Keep-alive ping returned ${res.statusCode}`);
+        }
+        res.resume(); // consume body to free socket
+      });
+      req.on('error', (err) => logger.warn(`Keep-alive ping failed: ${err.message}`));
+      req.setTimeout(10000, () => { req.destroy(); logger.warn('Keep-alive ping timed out'); });
+    }, 7 * 60 * 1000); // every 7 minutes
+    logger.info(`💓 Keep-alive pinging ${pingUrl} every 7 min`);
+  } else {
+    logger.info('ℹ️  Keep-alive disabled — set RENDER_SELF_URL to enable (e.g. https://yourapp.onrender.com)');
+  }
+}
+
 // ─── Graceful shutdown ────────────────────────────────────────────────────────
 const shutdown = (signal) => {
   logger.info(`${signal} received — shutting down gracefully`);

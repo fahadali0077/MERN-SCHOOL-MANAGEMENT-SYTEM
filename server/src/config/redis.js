@@ -28,15 +28,25 @@ const connectRedis = async () => {
       tls: process.env.REDIS_URL.startsWith('rediss://') ? { rejectUnauthorized: false } : undefined,
     });
 
+    let errorCount = 0;
     redisClient.on('connect', () => {
       redisAvailable = true;
+      errorCount = 0;
       logger.info('✅ Redis connected');
     });
     redisClient.on('error', (err) => {
       redisAvailable = false;
-      logger.error(`Redis error: ${err.message}`);
+      // FIX: Only log the first error and every 5th one after that to avoid
+      // flooding logs when Redis is unreachable on Render free tier.
+      errorCount++;
+      if (errorCount === 1 || errorCount % 5 === 0) {
+        logger.error(`Redis error (attempt ${errorCount}): ${err.message}`);
+      }
     });
-    redisClient.on('reconnecting', () => logger.warn('Redis reconnecting...'));
+    redisClient.on('reconnecting', () => {
+      // Only log first reconnect attempt — subsequent ones are noise
+      if (errorCount <= 1) logger.warn('Redis reconnecting...');
+    });
     redisClient.on('end', () => {
       redisAvailable = false;
       logger.warn('Redis connection closed');
