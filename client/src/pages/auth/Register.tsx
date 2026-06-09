@@ -5,7 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useDispatch } from 'react-redux';
-import { Eye, EyeOff, School, ArrowRight, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import Logo from '../../components/ui/Logo';
 import { useRegisterMutation } from '../../store/api/endpoints';
 import { setCredentials } from '../../store/slices/authSlice';
 import toast from 'react-hot-toast';
@@ -53,13 +54,8 @@ export default function Register() {
     <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="flex items-center gap-3 mb-8 justify-center">
-          <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shadow-glow">
-            <School size={20} className="text-white" />
-          </div>
-          <span className="font-display font-bold text-xl">
-            <span className="text-text-primary">School</span><span className="text-accent">MS</span>
-          </span>
+        <div className="flex items-center justify-center mb-8">
+          <Logo size={40} />
         </div>
 
         <div className="card p-8 animate-fade-up">

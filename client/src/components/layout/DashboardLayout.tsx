@@ -10,6 +10,7 @@ import {
 import { selectCurrentUser, selectUserRole } from '../../store/slices/authSlice';
 import { performLogout } from '../../store/slices/authSlice';
 import { toggleTheme, selectTheme } from '../../store/slices/uiSlice';
+import Logo from '../ui/Logo';
 import { RootState } from '../../store';
 import { useLogoutMutation } from '../../store/api/endpoints';
 import NotificationPanel from '../dashboard/NotificationPanel';
@@ -105,15 +106,7 @@ function Sidebar({ collapsed = false, onToggleCollapse, mobile = false, onClose 
     `}>
       {/* Logo row */}
       <div className={`flex items-center gap-3 border-b border-[rgba(255,255,255,0.05)] flex-shrink-0 ${isCollapsed ? 'justify-center px-0 py-4' : 'px-5 py-4'}`}>
-        <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center flex-shrink-0 shadow-glow-sm">
-          <School size={18} className="text-white" />
-        </div>
-        {!isCollapsed && (
-          <span className="font-display font-bold text-lg leading-none">
-            <span className="text-text-primary">School</span>
-            <span className="text-accent">MS</span>
-          </span>
-        )}
+        <Logo size={36} showText={!isCollapsed} className={isCollapsed ? '' : 'gap-3'} />
         {!mobile && onToggleCollapse && (
           <button
             onClick={onToggleCollapse}

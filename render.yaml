@@ -36,10 +36,6 @@ services:
         sync: false        # Upstash rediss:// URL
       - key: CLIENT_URL
         sync: false        # https://your-app.vercel.app
-      # Keep-alive self-ping (prevents Render free-tier sleep after 15 min of inactivity)
-      # Set this to the service's own URL, e.g. https://mern-school-management-sytem.onrender.com
-      - key: RENDER_SELF_URL
-        sync: false
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY

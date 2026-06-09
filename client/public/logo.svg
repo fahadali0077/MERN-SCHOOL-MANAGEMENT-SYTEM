@@ -1,7 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <!-- Accent rounded tile — matches the in-app logo (bg-accent, rounded-xl) -->
   <rect width="64" height="64" rx="15" fill="#0066FF"/>
-  <!-- lucide "School" icon (24x24), white, scaled 1.5x and centered with padding -->
   <g fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
      transform="translate(14 14) scale(1.5)">
     <path d="M14 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/>

@@ -1,0 +1,13 @@
+{
+  "name": "SchoolMS — School Management System",
+  "short_name": "SchoolMS",
+  "description": "Run your school, not spreadsheets. Students, attendance, fees, exams, and parent communication unified.",
+  "icons": [
+    { "src": "/favicon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/favicon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "theme_color": "#0066FF",
+  "background_color": "#0D0D1A",
+  "display": "standalone",
+  "start_url": "/"
+}

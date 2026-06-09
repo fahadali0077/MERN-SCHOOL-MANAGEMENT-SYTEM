@@ -2,8 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useWindowTitle } from '../hooks';
+import Logo from '../components/ui/Logo';
 import {
-  School, Users, ClipboardList, BarChart3, DollarSign, Bell,
+  Users, ClipboardList, BarChart3, DollarSign, Bell,
   QrCode, Shield, Zap, Globe, ArrowRight, CheckCircle, Star, ChevronRight
 } from 'lucide-react';
 
@@ -78,14 +79,7 @@ export default function Landing() {
     <div className="min-h-screen bg-bg-primary text-text-primary font-body">
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 h-16 bg-bg-primary/80 backdrop-blur-md border-b border-white/5">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-accent flex items-center justify-center shadow-glow-sm">
-            <School size={16} className="text-white" />
-          </div>
-          <span className="font-display font-bold text-lg">
-            <span className="text-text-primary">School</span><span className="text-accent">MS</span>
-          </span>
-        </div>
+        <Logo size={32} />
         <div className="hidden md:flex items-center gap-8 text-sm text-text-secondary">
           <a href="#features" className="hover:text-text-primary transition-colors">Features</a>
           <a href="#pricing" className="hover:text-text-primary transition-colors">Pricing</a>
@@ -315,14 +309,7 @@ export default function Landing() {
       {/* Footer */}
       <footer className="border-t border-white/5 py-10 px-6 md:px-12">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
-              <School size={14} className="text-white" />
-            </div>
-            <span className="font-display font-bold text-sm">
-              <span className="text-text-primary">School</span><span className="text-accent">MS</span>
-            </span>
-          </div>
+          <Logo size={28} glow={false} />
           <p className="text-text-tertiary text-xs">© {new Date().getFullYear()} SchoolMS. Built with ❤️ for educators worldwide.</p>
           <div className="flex gap-6 text-xs text-text-tertiary">
             <a href="#features" className="hover:text-text-secondary transition-colors">Features</a>

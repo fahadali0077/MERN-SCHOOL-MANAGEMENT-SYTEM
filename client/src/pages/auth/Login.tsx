@@ -5,7 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useDispatch } from 'react-redux';
-import { Eye, EyeOff, School, ArrowRight, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, Loader2 } from 'lucide-react';
+import Logo from '../../components/ui/Logo';
 import { useLoginMutation } from '../../store/api/endpoints';
 import { setCredentials } from '../../store/slices/authSlice';
 import toast from 'react-hot-toast';
@@ -55,15 +56,7 @@ export default function Login() {
 
         <div className="relative z-10 flex flex-col h-full p-12">
           {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shadow-glow">
-              <School size={20} className="text-white" />
-            </div>
-            <span className="font-display font-bold text-xl">
-              <span className="text-text-primary">School</span>
-              <span className="text-accent">MS</span>
-            </span>
-          </div>
+          <Logo size={40} />
 
           {/* Main content */}
           <div className="flex-1 flex flex-col justify-center max-w-md">
@@ -110,13 +103,8 @@ export default function Login() {
       {/* Right panel - login form */}
       <div className="flex-1 lg:max-w-lg flex flex-col justify-center px-8 md:px-12 lg:px-16">
         {/* Mobile logo */}
-        <div className="lg:hidden flex items-center gap-3 mb-10">
-          <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center">
-            <School size={18} className="text-white" />
-          </div>
-          <span className="font-display font-bold text-lg">
-            <span className="text-text-primary">School</span><span className="text-accent">MS</span>
-          </span>
+        <div className="lg:hidden mb-10">
+          <Logo size={36} glow={false} />
         </div>
 
         <div className="animate-fade-up">
